@@ -560,6 +560,7 @@ public class ChainMakerDriver implements Driver {
       String proxyContractCallName =
           chainMakerConnection.getProperty(ChainMakerConstant.CHAIN_MAKER_PROXY_NAME);
       Path path = context.getPath();
+      String pathStr = path.toString();
       String name = path.getResource();
       // contract client call name
       String contractCallName = chainMakerConnection.getProperty(name);
@@ -597,18 +598,12 @@ public class ChainMakerDriver implements Driver {
       if (Objects.isNull(transactionID) || transactionID.isEmpty() || "0".equals(transactionID)) {
         function =
             FunctionUtility.newConstantCallProxyFunction(
-                functionEncoder,
-                contractAddress,
-                abiDefinition.getMethodSignatureAsString(),
-                encodedArgs);
+                functionEncoder, name, abiDefinition.getMethodSignatureAsString(), encodedArgs);
         proxyMethod = FunctionUtility.ProxyCallMethod;
       } else {
         function =
             FunctionUtility.newConstantCallProxyFunction(
-                transactionID,
-                contractAddress,
-                abiDefinition.getMethodSignatureAsString(),
-                encodedArgs);
+                transactionID, pathStr, abiDefinition.getMethodSignatureAsString(), encodedArgs);
         proxyMethod = FunctionUtility.ProxyCallWithTransactionIdMethod;
       }
 
@@ -851,6 +846,7 @@ public class ChainMakerDriver implements Driver {
       String proxyContractCallName =
           chainMakerConnection.getProperty(ChainMakerConstant.CHAIN_MAKER_PROXY_NAME);
       Path path = context.getPath();
+      String pathStr = path.toString();
       String name = path.getResource();
       // contract client call name
       String contractCallName = chainMakerConnection.getProperty(name);
@@ -902,7 +898,7 @@ public class ChainMakerDriver implements Driver {
             FunctionUtility.newSendTransactionProxyFunction(
                 functionEncoder,
                 uid,
-                contractAddress,
+                name,
                 abiDefinition.getMethodSignatureAsString(),
                 encodedArgs);
         proxyMethod = FunctionUtility.ProxySendTXMethod;
@@ -912,7 +908,7 @@ public class ChainMakerDriver implements Driver {
                 uid,
                 transactionID,
                 seq,
-                contractAddress,
+                pathStr,
                 abiDefinition.getMethodSignatureAsString(),
                 encodedArgs);
         proxyMethod = FunctionUtility.ProxySendTransactionTXMethod;

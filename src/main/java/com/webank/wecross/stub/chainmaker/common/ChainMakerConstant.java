@@ -20,6 +20,4 @@ public interface ChainMakerConstant {
   String CHAIN_MAKER_PROPERTY_CRYPTO_HASH = "CHAIN_MAKER_PROPERTY_CRYPTO_HASH";
 
   String CHAIN_MAKER_CONTRACT_ARGS_EVM_PARAM = "data";
-
-  String PROXY_METHOD_GET_PATHS = "getPaths";
 }

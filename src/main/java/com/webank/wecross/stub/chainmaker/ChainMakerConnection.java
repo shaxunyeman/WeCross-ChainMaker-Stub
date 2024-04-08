@@ -12,6 +12,7 @@ import com.webank.wecross.stub.chainmaker.client.AbstractClientWrapper;
 import com.webank.wecross.stub.chainmaker.common.ChainMakerConstant;
 import com.webank.wecross.stub.chainmaker.common.ChainMakerRequestType;
 import com.webank.wecross.stub.chainmaker.common.ChainMakerStatusCode;
+import com.webank.wecross.stub.chainmaker.common.ChainMakerStubException;
 import com.webank.wecross.stub.chainmaker.protocal.TransactionParams;
 import com.webank.wecross.stub.chainmaker.utils.FunctionUtility;
 import java.math.BigInteger;
@@ -224,23 +225,18 @@ public class ChainMakerConnection implements Connection {
   }
 
   public List<ResourceInfo> getResources() {
-    List<ResourceInfo> resources =
+    List<ResourceInfo> resourceInfos =
         new ArrayList<ResourceInfo>() {
           {
             addAll(resourceInfoList);
           }
         };
-
-    String[] paths = listPaths();
-    if (Objects.nonNull(paths)) {
-      for (String path : paths) {
+    String[] resources = listResources();
+    if (Objects.nonNull(resources)) {
+      for (String resource : resources) {
         ResourceInfo resourceInfo = new ResourceInfo();
         resourceInfo.setStubType(getProperty(ChainMakerConstant.CHAIN_MAKER_PROPERTY_STUB_TYPE));
-        String[] pathSplit = path.split("\\.");
-        if (pathSplit.length != 3) {
-          continue;
-        }
-        resourceInfo.setName(pathSplit[2]);
+        resourceInfo.setName(resource);
         Map<Object, Object> resourceProperties = new HashMap<>();
         resourceProperties.put(
             ChainMakerConstant.CHAIN_MAKER_PROPERTY_CHAIN_ID,
@@ -249,16 +245,16 @@ public class ChainMakerConnection implements Connection {
             ChainMakerConstant.CHAIN_MAKER_PROPERTY_AUTH_TYPE,
             getProperty(ChainMakerConstant.CHAIN_MAKER_PROPERTY_AUTH_TYPE));
         resourceInfo.setProperties(resourceProperties);
-        resources.add(resourceInfo);
+        resourceInfos.add(resourceInfo);
       }
     }
-    return resources;
+    return resourceInfos;
   }
 
-  public String[] listPaths() {
+  public String[] listResources() {
     try {
       Function function =
-          FunctionUtility.newDefaultFunction(ChainMakerConstant.PROXY_METHOD_GET_PATHS, null);
+          FunctionUtility.newDefaultFunction(FunctionUtility.ProxyGetResourcesMethodName, null);
       String methodDataStr = functionEncoder.encode(function);
       String methodId =
           functionEncoder.buildMethodId(
@@ -266,23 +262,21 @@ public class ChainMakerConnection implements Connection {
                   function.getName(), function.getInputParameters()));
       Map<String, byte[]> params = new HashMap<>();
       params.put(ChainMakerConstant.CHAIN_MAKER_CONTRACT_ARGS_EVM_PARAM, methodDataStr.getBytes());
-      ResultOuterClass.TxResponse responseInfo =
+      ResultOuterClass.TxResponse txResponse =
           clientWrapper.queryContract(
               getProperty(ChainMakerConstant.CHAIN_MAKER_PROXY_NAME), methodId, params);
-      if (Objects.equals(
-          responseInfo.getCode().getNumber(), ResultOuterClass.TxStatusCode.SUCCESS.getNumber())) {
-        logger.warn("listPaths failed, status {}", responseInfo.getCode().getNumber());
+      if (!Objects.equals(
+          txResponse.getCode().getNumber(), ResultOuterClass.TxStatusCode.SUCCESS.getNumber())) {
+        logger.warn("listPaths failed, status {}", txResponse.getCode().getNumber());
         return null;
       }
-      String[] paths =
+      String[] resources =
           FunctionUtility.decodeDefaultOutput(
-              Hex.toHexString(responseInfo.getContractResult().getResult().toByteArray()));
+              Hex.toHexString(txResponse.getContractResult().getResult().toByteArray()));
       Set<String> set = new LinkedHashSet<>();
-      set.add("a.b." + ChainMakerConstant.CHAIN_MAKER_PROXY_NAME);
-      set.add("a.b." + ChainMakerConstant.CHAIN_MAKER_HUB_NAME);
-      if (Objects.nonNull(paths) && paths.length != 0) {
-        for (int i = paths.length - 1; i >= 0; i--) {
-          set.add(paths[i]);
+      if (Objects.nonNull(resources) && resources.length != 0) {
+        for (int i = resources.length - 1; i >= 0; i--) {
+          set.add(resources[i]);
         }
       } else {
         logger.debug("No path found and add system resources");
@@ -291,6 +285,29 @@ public class ChainMakerConnection implements Connection {
     } catch (Exception e) {
       logger.warn("listPaths failed,", e);
       return null;
+    }
+  }
+
+  public void registerCNS(String path, String address) {
+    try {
+      Function function = FunctionUtility.newRegisterCNSProxyFunction(path, address);
+      String methodDataStr = functionEncoder.encode(function);
+      String methodId =
+          functionEncoder.buildMethodId(
+              FunctionEncoder.buildMethodSignature(
+                  function.getName(), function.getInputParameters()));
+      Map<String, byte[]> params = new HashMap<>();
+      params.put(ChainMakerConstant.CHAIN_MAKER_CONTRACT_ARGS_EVM_PARAM, methodDataStr.getBytes());
+      ResultOuterClass.TxResponse txResponse =
+          clientWrapper.invokeContract(
+              getProperty(ChainMakerConstant.CHAIN_MAKER_PROXY_NAME), methodId, params);
+      if (!Objects.equals(
+          txResponse.getCode().getNumber(), ResultOuterClass.TxStatusCode.SUCCESS.getNumber())) {
+        throw new ChainMakerStubException(
+            txResponse.getCode().getNumber(), txResponse.getMessage());
+      }
+    } catch (Exception e) {
+      logger.warn("registerCNS fail,path:{},address:{}", path, address, e);
     }
   }
 

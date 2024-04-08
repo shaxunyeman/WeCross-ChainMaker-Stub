@@ -67,13 +67,21 @@ public class ChainMakerConnectionFactory {
     // from config build resources
     List<ChainMakerStubConfig.Resource> resources = chainMakerStubConfig.getResources();
     if (!resources.isEmpty()) {
+      // addProperty
       for (ChainMakerStubConfig.Resource resource : resources) {
+        String name = resource.getName();
         // name->callName
-        connection.addProperty(resource.getName(), resource.getCallName());
+        connection.addProperty(name, resource.getCallName());
         // name+ADDR->address
-        connection.addAddress(resource.getName(), resource.getAddress());
+        connection.addAddress(name, resource.getAddress());
         // name+ABI->abi
-        connection.addAbi(resource.getName(), resource.getAbi());
+        connection.addAbi(name, resource.getAbi());
+      }
+
+      // after connection addProperty , need use proxy callName
+      for (ChainMakerStubConfig.Resource resource : resources) {
+        // registerCNS and addResource
+        connection.registerCNS("a.b." + resource.getName(), resource.getAddress());
       }
     }
     return connection;

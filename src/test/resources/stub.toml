@@ -23,12 +23,12 @@
 [[resources]]
     type = 'CM_CONTRACT'
     name = 'WeCrossProxy'
-    callName = 'WeCrossProxy123'
-    address = 'a6e7603f349e13ab4d5f422a55463a845213ed5a'
+    callName = 'fb5387fc18d386937458551910e307dffb8bf780'
+    address = '0x16d09a2580c2ac8ed649c1df35b93061de1fa130'
     abi = ''
 [[resources]]
     type = 'CM_CONTRACT'
     name = 'WeCrossHub'
-    callName = 'WeCrossHub123'
-    address = '737d37475b787843dbe1de942acb4bfebf5cb3e5'
+    callName = 'bc1ea1cbda9dfcdaeac321e170dd07b62a187908'
+    address = '0x3928313d50222ae2ec908a99a83d5b6a56e56a7c'
     abi = ''

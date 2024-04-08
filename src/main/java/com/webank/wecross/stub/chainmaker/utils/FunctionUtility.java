@@ -42,41 +42,41 @@ public class FunctionUtility {
   public static final int MethodIDLength = 8;
   public static final int MethodIDWithHexPrefixLength = MethodIDLength + 2;
 
-  public static final String ProxySendTXMethod = "sendTransaction(string,address,bytes)";
+  public static final String ProxySendTXMethod = "sendTransaction(string,string,bytes)";
   public static final String ProxySendTXMethodName = "sendTransaction";
 
   public static final String ProxySendTransactionTXMethod =
-      "sendTransactionWithXa(string,string,uint256,address,string,bytes)";
+      "sendTransactionWithXa(string,string,uint256,string,string,bytes)";
   public static final String ProxySendTransactionTXMethodName = "sendTransactionWithXa";
 
   public static final String ProxyCallWithTransactionIdMethod =
-      "constantCallWithXa(string,address,string,bytes)";
+      "constantCallWithXa(string,string,string,bytes)";
   public static final String ProxyCallWithTransactionIdMethodName = "constantCallWithXa";
 
-  public static final String ProxyCallMethod = "constantCall(address,bytes)";
+  public static final String ProxyCallMethod = "constantCall(string,bytes)";
   public static final String ProxyCallMethodName = "constantCall";
+
+  public static final String ProxyRegisterCNSMethod = "registerCNS(string,address)";
+  public static final String ProxyRegisterCNSMethodName = "registerCNS";
+
+  public static final String ProxyGetResourcesMethod = "getResources()";
+  public static final String ProxyGetResourcesMethodName = "getResources";
 
   public static final List<TypeReference<?>> abiTypeReferenceOutputs =
       Collections.singletonList(new TypeReference<DynamicArray<Utf8String>>() {});
 
-  /**
-   * Get the function object used to encode and decode the abi parameters
-   *
-   * @param funcName
-   * @param params
-   * @return Function
-   */
+  /** Get the function object used to encode and decode the abi parameters */
   public static Function newDefaultFunction(String funcName, String[] params) {
 
     if (Objects.isNull(params)) {
       // public func() returns(string[])
-      return new Function(funcName, Arrays.<Type>asList(), abiTypeReferenceOutputs);
+      return new Function(funcName, Collections.emptyList(), abiTypeReferenceOutputs);
     }
 
     // public func(string[]) returns(string[])
     return new Function(
         funcName,
-        Arrays.asList(
+        Collections.singletonList(
             (0 == params.length)
                 ? new DynamicArray<>(Utf8String.class, Collections.emptyList())
                 : new DynamicArray<>(
@@ -85,23 +85,16 @@ public class FunctionUtility {
   }
 
   /**
-   * WeCrossProxy constantCallWithXa function <br>
-   * </>function constantCallWithXa(string memory _XATransactionID, string memory _path, string
-   * memory _func, bytes memory _args) public returns (bytes memory)
-   *
-   * @param id
-   * @param contractAddress
-   * @param methodSignature
-   * @param abi
-   * @return
+   * WeCrossProxy constantCallWithXa function constantCallWithXa(string memory _XATransactionID,
+   * string memory _path, string memory _func, bytes memory _args) public returns (bytes memory)
    */
   public static Function newConstantCallProxyFunction(
-      String id, String contractAddress, String methodSignature, byte[] abi) {
+      String id, String path, String methodSignature, byte[] abi) {
     return new Function(
         ProxyCallWithTransactionIdMethodName,
         Arrays.asList(
             new Utf8String(id),
-            new Address(contractAddress),
+            new Utf8String(path),
             new Utf8String(methodSignature),
             new DynamicBytes(abi)),
         Collections.emptyList());
@@ -110,14 +103,9 @@ public class FunctionUtility {
   /**
    * WeCrossProxy constantCall function constantCall(string memory _name, bytes memory
    * _argsWithMethodId) public returns (bytes memory)
-   *
-   * @param contractAddress
-   * @param methodSignature
-   * @param abi
-   * @return
    */
   public static Function newConstantCallProxyFunction(
-      FunctionEncoder functionEncoder, String contractAddress, String methodSignature, byte[] abi)
+      FunctionEncoder functionEncoder, String name, String methodSignature, byte[] abi)
       throws IOException {
     String methodId = functionEncoder.buildMethodId(methodSignature);
     ByteArrayOutputStream params = new ByteArrayOutputStream();
@@ -127,58 +115,35 @@ public class FunctionUtility {
     }
     return new Function(
         ProxyCallMethodName,
-        Arrays.asList(new Address(contractAddress), new DynamicBytes(params.toByteArray())),
+        Arrays.asList(new Utf8String(name), new DynamicBytes(params.toByteArray())),
         Collections.emptyList());
   }
 
   /**
    * WeCrossProxy sendTransactionWithXa function sendTransactionWithXa(string memory _uid, string
    * memory _XATransactionID, uint256 _XATransactionSeq, string memory _path, string memory _func,
-   * bytes memory _args) public returns (bytes memory) {
-   *
-   * @param uid
-   * @param tid
-   * @param seq
-   * @param contractAddress
-   * @param methodSignature
-   * @param abi
-   * @return
+   * bytes memory _args) public returns (bytes memory)
    */
   public static Function newSendTransactionProxyFunction(
-      String uid,
-      String tid,
-      long seq,
-      String contractAddress,
-      String methodSignature,
-      byte[] abi) {
+      String uid, String tid, long seq, String path, String methodSignature, byte[] abi) {
     return new Function(
         ProxySendTransactionTXMethodName,
         Arrays.asList(
             new Utf8String(uid),
             new Utf8String(tid),
             new Uint256(seq),
-            new Address(contractAddress),
+            new Utf8String(path),
             new Utf8String(methodSignature),
             new DynamicBytes(abi)),
         Collections.emptyList());
   }
 
   /**
-   * WeCrossProxy sendTransaction function sendTransaction(string memory _uid, string memory _name,
-   * bytes memory _argsWithMethodId) public returns (bytes memory)
-   *
-   * @param uid
-   * @param contractAddress
-   * @param methodSignature
-   * @param abi
-   * @return
+   * WeCrossProxy sendTransaction function sendTransaction(string memory _uid, string memory
+   * _name,bytes memory _argsWithMethodId) public returns (bytes memory)
    */
   public static Function newSendTransactionProxyFunction(
-      FunctionEncoder functionEncoder,
-      String uid,
-      String contractAddress,
-      String methodSignature,
-      byte[] abi)
+      FunctionEncoder functionEncoder, String uid, String name, String methodSignature, byte[] abi)
       throws IOException {
     String methodId = functionEncoder.buildMethodId(methodSignature);
     ByteArrayOutputStream params = new ByteArrayOutputStream();
@@ -189,18 +154,19 @@ public class FunctionUtility {
     return new Function(
         ProxySendTXMethodName,
         Arrays.asList(
-            new Utf8String(uid),
-            new Address(contractAddress),
-            new DynamicBytes(params.toByteArray())),
+            new Utf8String(uid), new Utf8String(name), new DynamicBytes(params.toByteArray())),
         Collections.emptyList());
   }
 
-  /**
-   * decode WeCrossProxy constantCall input
-   *
-   * @param input
-   * @return
-   */
+  /** WeCrossProxy registerCNS function registerCNS(string memory _path, address _addr) public */
+  public static Function newRegisterCNSProxyFunction(String path, String address) {
+    return new Function(
+        ProxyRegisterCNSMethodName,
+        Arrays.asList(new Utf8String(path), new Address(address)),
+        Collections.emptyList());
+  }
+
+  /** decode WeCrossProxy constantCall input */
   public static Tuple4<String, String, String, byte[]> getConstantCallProxyFunctionInput(
       String input) {
     String data = input.substring(Numeric.containsHexPrefix(input) ? 10 : 8);
@@ -222,12 +188,7 @@ public class FunctionUtility {
         (byte[]) results.get(3).getValue());
   }
 
-  /**
-   * decode WeCrossProxy constantCall input
-   *
-   * @param input
-   * @return
-   */
+  /** decode WeCrossProxy constantCall input */
   public static Tuple2<String, byte[]> getConstantCallFunctionInput(String input) {
     String data = input.substring(Numeric.containsHexPrefix(input) ? 10 : 8);
     final Function function =
@@ -241,12 +202,7 @@ public class FunctionUtility {
     return new Tuple2<>((String) results.get(0).getValue(), (byte[]) results.get(1).getValue());
   }
 
-  /**
-   * decode WeCrossProxy sendTransaction input
-   *
-   * @param input
-   * @return
-   */
+  /** decode WeCrossProxy sendTransaction input */
   public static Tuple6<String, String, BigInteger, String, String, byte[]>
       getSendTransactionProxyFunctionInput(String input) {
     String data = input.substring(Numeric.containsHexPrefix(input) ? 10 : 8);
@@ -274,18 +230,14 @@ public class FunctionUtility {
   }
 
   public static byte[] decodeProxyBytesOutput(String output) {
-    List<TypeReference<?>> outputParameters = Arrays.asList(new TypeReference<DynamicBytes>() {});
+    List<TypeReference<?>> outputParameters =
+        Collections.singletonList(new TypeReference<DynamicBytes>() {});
     List<Type> results = FunctionReturnDecoder.decode(output, Utils.convert(outputParameters));
 
     return (byte[]) results.get(0).getValue();
   }
 
-  /**
-   * decode WeCrossProxy sendTransaction input
-   *
-   * @param input
-   * @return
-   */
+  /** decode WeCrossProxy sendTransaction input */
   public static Tuple3<String, String, byte[]> getSendTransactionProxyWithoutTxIdFunctionInput(
       String input) {
     String data = input.substring(Numeric.containsHexPrefix(input) ? 10 : 8);
@@ -318,10 +270,7 @@ public class FunctionUtility {
     return stringList;
   }
 
-  /**
-   * @param input
-   * @return
-   */
+  /** decode default input */
   public static String[] decodeDefaultInput(String input) {
     if (Objects.isNull(input) || input.length() < MethodIDLength) {
       return null;
@@ -335,12 +284,7 @@ public class FunctionUtility {
     return decodeDefaultOutput(input.substring(MethodIDLength));
   }
 
-  /**
-   * decode abi encode data
-   *
-   * @param output
-   * @return
-   */
+  /** decode default output */
   public static String[] decodeDefaultOutput(String output) {
     if (Objects.isNull(output) || output.length() < MethodIDLength) {
       return null;

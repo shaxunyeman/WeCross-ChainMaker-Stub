@@ -39,24 +39,24 @@ public abstract class AbstractClientWrapper implements ClientWrapper {
 
   @Override
   public ResultOuterClass.TxResponse queryContract(
-      String contractCallName, String method, Map<String, byte[]> params)
+      String contractCallName, String methodId, Map<String, byte[]> params)
       throws ChainClientException, ChainMakerCryptoSuiteException {
-    return client.queryContract(contractCallName, method, null, params, rpcCallTimeout);
+    return client.queryContract(contractCallName, methodId, null, params, rpcCallTimeout);
   }
 
   @Override
   public ResultOuterClass.TxResponse invokeContract(
-      String contractCallName, String method, Map<String, byte[]> params)
+      String contractCallName, String methodId, Map<String, byte[]> params)
       throws ChainClientException, ChainMakerCryptoSuiteException {
     return client.invokeContract(
-        contractCallName, method, null, params, rpcCallTimeout, syncResultTimeout);
+        contractCallName, methodId, null, params, rpcCallTimeout, syncResultTimeout);
   }
 
   @Override
   public ResultOuterClass.TxResponse sendContractRequest(
-      String contractCallName, String method, Map<String, byte[]> params, User user)
+      String contractCallName, String methodId, Map<String, byte[]> params, User user)
       throws ChainMakerCryptoSuiteException, ChainClientException {
-    Request.Payload payload = client.invokeContractPayload(contractCallName, method, "", params);
+    Request.Payload payload = client.invokeContractPayload(contractCallName, methodId, "", params);
     return client.sendContractRequest(payload, null, rpcCallTimeout, syncResultTimeout, user);
   }
 
