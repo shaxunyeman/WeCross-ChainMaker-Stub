@@ -28,6 +28,7 @@ import com.webank.wecross.stub.chainmaker.utils.BlockUtility;
 import com.webank.wecross.stub.chainmaker.utils.FunctionUtility;
 import com.webank.wecross.stub.chainmaker.utils.RevertMessage;
 import java.math.BigInteger;
+import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -198,7 +199,16 @@ public class ChainMakerDriver implements Driver {
     transaction.setTxBytes(chainmakerTransaction.toByteArray());
     String memberInfo =
         chainmakerTransaction.getSender().getSigner().getMemberInfo().toStringUtf8();
-    String userAddr = CryptoUtils.getEVMAddressFromPKPEM(memberInfo, "SHA256", "EC");
+    String hashType =
+        connection.getProperties().get(ChainMakerConstant.CHAIN_MAKER_PROPERTY_CRYPTO_HASH);
+    String algorithm =
+        ((ChainMakerConnection) connection)
+            .getClientWrapper()
+            .getNativeClient()
+            .getClientUser()
+            .getPrivateKey()
+            .getAlgorithm();
+    String userAddr = CryptoUtils.getEVMAddressFromPKPEM(memberInfo, hashType, algorithm);
     transaction.setAccountIdentity(userAddr);
     transaction.setTransactionByProxy(true);
     transaction.getTransactionResponse().setHash(txId);
@@ -297,7 +307,8 @@ public class ChainMakerDriver implements Driver {
             // TODO:  merkle validation need add
 
           } else {
-            assembleTransaction(transactionHash, proof.getTransactionInfo(), null, callback);
+            assembleTransaction(
+                transactionHash, proof.getTransactionInfo(), null, connection, callback);
           }
         });
   }
@@ -306,6 +317,7 @@ public class ChainMakerDriver implements Driver {
       String transactionHash,
       ChainmakerTransaction.TransactionInfo transactionInfo,
       Block block,
+      Connection connection,
       GetTransactionCallback callback) {
     try {
       String methodId;
@@ -323,7 +335,16 @@ public class ChainMakerDriver implements Driver {
       //      transaction.setTxBytes();
       String memberInfo =
           chainmakerTransaction.getSender().getSigner().getMemberInfo().toStringUtf8();
-      String userAddr = CryptoUtils.getEVMAddressFromPKPEM(memberInfo, "SHA256", "EC");
+      String hashType =
+          connection.getProperties().get(ChainMakerConstant.CHAIN_MAKER_PROPERTY_CRYPTO_HASH);
+      String algorithm =
+          ((ChainMakerConnection) connection)
+              .getClientWrapper()
+              .getNativeClient()
+              .getClientUser()
+              .getPrivateKey()
+              .getAlgorithm();
+      String userAddr = CryptoUtils.getEVMAddressFromPKPEM(memberInfo, hashType, algorithm);
       transaction.setAccountIdentity(userAddr);
       transaction.setTransactionByProxy(true);
       transaction.getTransactionResponse().setHash(txId);
@@ -503,7 +524,20 @@ public class ChainMakerDriver implements Driver {
 
   @Override
   public byte[] accountSign(Account account, byte[] message) {
-    return new byte[0];
+    if (!(account instanceof ChainMakerPublicAccount)) {
+      throw new UnsupportedOperationException(
+          "Not ChainMakerAccount, account name: " + account.getClass().getName());
+    }
+    User user = ((ChainMakerPublicAccount) account).getUser();
+    PrivateKey privateKey = null;
+    try {
+      privateKey = CryptoUtils.getPrivateKeyFromBytes(user.getPriBytes());
+      // TODO: hashType
+      return user.getCryptoSuite().rsaSign(privateKey, message, "");
+    } catch (Exception e) {
+      throw new UnsupportedOperationException(
+          "get account user privateKey error,account name:" + account.getClass().getName());
+    }
   }
 
   @Override
