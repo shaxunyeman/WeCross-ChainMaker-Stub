@@ -28,6 +28,7 @@ import com.webank.wecross.stub.chainmaker.utils.BlockUtility;
 import com.webank.wecross.stub.chainmaker.utils.FunctionUtility;
 import com.webank.wecross.stub.chainmaker.utils.RevertMessage;
 import java.math.BigInteger;
+import java.security.InvalidParameterException;
 import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,6 +49,7 @@ import org.fisco.bcos.sdk.abi.FunctionEncoder;
 import org.fisco.bcos.sdk.abi.datatypes.Function;
 import org.fisco.bcos.sdk.abi.datatypes.generated.tuples.generated.Tuple2;
 import org.fisco.bcos.sdk.abi.datatypes.generated.tuples.generated.Tuple3;
+import org.fisco.bcos.sdk.abi.datatypes.generated.tuples.generated.Tuple4;
 import org.fisco.bcos.sdk.abi.datatypes.generated.tuples.generated.Tuple6;
 import org.fisco.bcos.sdk.abi.wrapper.ABICodecJsonWrapper;
 import org.fisco.bcos.sdk.abi.wrapper.ABIDefinition;
@@ -84,7 +86,128 @@ public class ChainMakerDriver implements Driver {
 
   @Override
   public ImmutablePair<Boolean, TransactionRequest> decodeTransactionRequest(Request request) {
-    return null;
+    int requestType = request.getType();
+    /** check if transaction request */
+    if ((requestType != ChainMakerRequestType.CALL)
+        && (requestType != ChainMakerRequestType.SEND_TRANSACTION)) {
+      return new ImmutablePair<>(false, null);
+    }
+    try {
+      byte[] data = request.getData();
+      TransactionParams transactionParams = objectMapper.readValue(data, TransactionParams.class);
+      TransactionRequest transactionRequest = transactionParams.getTransactionRequest();
+      String[] args = transactionRequest.getArgs();
+      String method = transactionRequest.getMethod();
+      TransactionParams.SUB_TYPE subType = transactionParams.getSubType();
+      String contractAbi = transactionParams.getAbi();
+      String abi = "";
+      String encodeAbi = "";
+      switch (subType) {
+        case SEND_TX_BY_PROXY:
+        case CALL_BY_PROXY:
+          {
+            if (subType == TransactionParams.SUB_TYPE.SEND_TX_BY_PROXY) {
+              org.chainmaker.pb.common.Request.TxRequest txRequest =
+                  objectMapper.readValue(
+                      transactionParams.getSignData(),
+                      org.chainmaker.pb.common.Request.TxRequest.class);
+              byte[] value =
+                  txRequest.getPayload().getParametersList().get(0).getValue().toByteArray();
+              String valueData = Hex.toHexString(value);
+              if (valueData.startsWith(
+                  Numeric.cleanHexPrefix(
+                      functionEncoder.buildMethodId(
+                          FunctionUtility.ProxySendTransactionTXMethod)))) {
+                Tuple6<String, String, BigInteger, String, String, byte[]>
+                    sendTransactionProxyFunctionInput =
+                        FunctionUtility.getSendTransactionProxyFunctionInput(valueData);
+                abi = Hex.toHexString(sendTransactionProxyFunctionInput.getValue6());
+              } else {
+                Tuple3<String, String, byte[]> sendTransactionProxyFunctionInput =
+                    FunctionUtility.getSendTransactionProxyWithoutTxIdFunctionInput(valueData);
+                abi = Hex.toHexString(sendTransactionProxyFunctionInput.getValue3());
+                abi = abi.substring(FunctionUtility.MethodIDLength);
+              }
+            } else {
+              byte[] contractMethodParamsBytes =
+                  transactionParams
+                      .getContractMethodParams()
+                      .get(ChainMakerConstant.CHAIN_MAKER_CONTRACT_ARGS_EVM_PARAM);
+              String contractMethodParams = Hex.toHexString(contractMethodParamsBytes);
+              if (contractMethodParams.startsWith(
+                  functionEncoder.buildMethodId(
+                      FunctionUtility.ProxyCallWithTransactionIdMethod))) {
+                Tuple4<String, String, String, byte[]> constantCallProxyFunctionInput =
+                    FunctionUtility.getConstantCallProxyFunctionInput(contractMethodParams);
+                abi = Hex.toHexString(constantCallProxyFunctionInput.getValue4());
+              } else {
+                Tuple2<String, byte[]> sendTransactionProxyFunctionInput =
+                    FunctionUtility.getConstantCallFunctionInput(contractMethodParams);
+                abi = Hex.toHexString(sendTransactionProxyFunctionInput.getValue2());
+                abi = abi.substring(FunctionUtility.MethodIDLength);
+              }
+            }
+
+            List<ABIDefinition> abiDefinitions =
+                abiDefinitionFactory
+                    .loadABI(transactionParams.getAbi())
+                    .getFunctions()
+                    .get(transactionRequest.getMethod());
+            if (Objects.isNull(abiDefinitions) || abiDefinitions.isEmpty()) {
+              throw new InvalidParameterException(
+                  " found no method in abi, method: " + transactionRequest.getMethod());
+            }
+
+            byte[] encodedArgs =
+                Hex.decode(
+                    abiCodec.encodeMethodFromString(
+                        contractAbi,
+                        method,
+                        args != null ? Arrays.asList(args) : new ArrayList<>()));
+            encodeAbi = Hex.toHexString(encodedArgs);
+            break;
+          }
+        case SEND_TX:
+        case CALL:
+          {
+            if (subType == TransactionParams.SUB_TYPE.SEND_TX) {
+              org.chainmaker.pb.common.Request.TxRequest txRequest =
+                  org.chainmaker.pb.common.Request.TxRequest.parseFrom(
+                      transactionParams.getSignData());
+              byte[] value = txRequest.getPayload().getParameters(0).getValue().toByteArray();
+              abi = Hex.toHexString(value);
+            } else {
+              Map<String, byte[]> contractMethodParams =
+                  transactionParams.getContractMethodParams();
+              byte[] orgEncodeArgs =
+                  contractMethodParams.get(ChainMakerConstant.CHAIN_MAKER_CONTRACT_ARGS_EVM_PARAM);
+              abi = Hex.toHexString(orgEncodeArgs);
+            }
+            FunctionUtility.newDefaultFunction(method, args);
+            byte[] encodedArgs =
+                Hex.decode(
+                    abiCodec.encodeMethodFromString(
+                        contractAbi,
+                        method,
+                        args != null ? Arrays.asList(args) : new ArrayList<>()));
+            encodeAbi = Hex.toHexString(encodedArgs);
+            break;
+          }
+        default:
+          {
+            // not call/sendTransaction
+            return new ImmutablePair<>(true, null);
+          }
+      }
+      if (Numeric.cleanHexPrefix(encodeAbi).equals(Numeric.cleanHexPrefix(abi))) {
+        return new ImmutablePair<>(true, transactionRequest);
+      }
+      logger.warn(" abi not meet expectations, abi:{}, encodeAbi:{}", abi, encodeAbi);
+      return new ImmutablePair<>(true, null);
+    } catch (Exception e) {
+      logger.error("decodeTransactionRequest error: ", e);
+      return new ImmutablePair<>(true, null);
+    }
   }
 
   @Override
@@ -624,8 +747,12 @@ public class ChainMakerDriver implements Driver {
 
       TransactionParams transaction =
           new TransactionParams(
-              request, proxyContractCallName, functionEncoder.buildMethodId(proxyMethod), params);
-
+              request,
+              proxyContractCallName,
+              functionEncoder.buildMethodId(proxyMethod),
+              params,
+              TransactionParams.SUB_TYPE.CALL_BY_PROXY);
+      transaction.setAbi(contractAbi);
       Request req =
           Request.newRequest(
               ChainMakerRequestType.CALL, objectMapper.writeValueAsBytes(transaction));
@@ -759,7 +886,9 @@ public class ChainMakerDriver implements Driver {
               request,
               contractCallName,
               functionEncoder.buildMethodId(abiDefinition.getMethodSignatureAsString()),
-              params);
+              params,
+              TransactionParams.SUB_TYPE.CALL);
+      transaction.setAbi(contractAbi);
       Request req =
           Request.newRequest(
               ChainMakerRequestType.CALL, objectMapper.writeValueAsBytes(transaction));
@@ -941,7 +1070,11 @@ public class ChainMakerDriver implements Driver {
           ClientUtility.createTxRequest(
               payload, clientUser.getOrgId(), user, nativeClient.getHash());
       TransactionParams transactionParams =
-          new TransactionParams(request, objectMapper.writeValueAsBytes(txRequest));
+          new TransactionParams(
+              request,
+              objectMapper.writeValueAsBytes(txRequest),
+              TransactionParams.SUB_TYPE.SEND_TX);
+      transactionParams.setAbi(contractAbi);
       Request req =
           Request.newRequest(
               ChainMakerRequestType.SEND_TRANSACTION,
@@ -1084,7 +1217,11 @@ public class ChainMakerDriver implements Driver {
           ClientUtility.createTxRequest(
               payload, clientUser.getOrgId(), user, nativeClient.getHash());
       TransactionParams transactionParams =
-          new TransactionParams(request, objectMapper.writeValueAsBytes(txRequest));
+          new TransactionParams(
+              request,
+              objectMapper.writeValueAsBytes(txRequest),
+              TransactionParams.SUB_TYPE.SEND_TX_BY_PROXY);
+      transactionParams.setAbi(contractAbi);
       Request req =
           Request.newRequest(
               ChainMakerRequestType.SEND_TRANSACTION,
