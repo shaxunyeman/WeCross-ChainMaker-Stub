@@ -15,6 +15,7 @@ import org.chainmaker.sdk.RpcServiceClient;
 import org.chainmaker.sdk.User;
 import org.chainmaker.sdk.crypto.ChainMakerCryptoSuiteException;
 import org.chainmaker.sdk.execption.ExceptionType;
+import org.fisco.bcos.sdk.utils.Numeric;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,24 +40,31 @@ public abstract class AbstractClientWrapper implements ClientWrapper {
 
   @Override
   public ResultOuterClass.TxResponse queryContract(
-      String contractCallName, String methodId, Map<String, byte[]> params)
+      String contractAddress, String methodId, Map<String, byte[]> params)
       throws ChainClientException, ChainMakerCryptoSuiteException {
-    return client.queryContract(contractCallName, methodId, null, params, rpcCallTimeout);
+    return client.queryContract(
+        Numeric.cleanHexPrefix(contractAddress), methodId, null, params, rpcCallTimeout);
   }
 
   @Override
   public ResultOuterClass.TxResponse invokeContract(
-      String contractCallName, String methodId, Map<String, byte[]> params)
+      String contractAddress, String methodId, Map<String, byte[]> params)
       throws ChainClientException, ChainMakerCryptoSuiteException {
     return client.invokeContract(
-        contractCallName, methodId, null, params, rpcCallTimeout, syncResultTimeout);
+        Numeric.cleanHexPrefix(contractAddress),
+        methodId,
+        null,
+        params,
+        rpcCallTimeout,
+        syncResultTimeout);
   }
 
   @Override
   public ResultOuterClass.TxResponse sendContractRequest(
-      String contractCallName, String methodId, Map<String, byte[]> params, User user)
+      String contractAddress, String methodId, Map<String, byte[]> params, User user)
       throws ChainMakerCryptoSuiteException, ChainClientException {
-    Request.Payload payload = client.invokeContractPayload(contractCallName, methodId, "", params);
+    Request.Payload payload =
+        client.invokeContractPayload(Numeric.cleanHexPrefix(contractAddress), methodId, "", params);
     return client.sendContractRequest(payload, null, rpcCallTimeout, syncResultTimeout, user);
   }
 

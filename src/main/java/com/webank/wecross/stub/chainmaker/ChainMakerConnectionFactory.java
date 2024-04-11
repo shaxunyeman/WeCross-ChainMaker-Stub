@@ -70,15 +70,13 @@ public class ChainMakerConnectionFactory {
       // addProperty
       for (ChainMakerStubConfig.Resource resource : resources) {
         String name = resource.getName();
-        // name->callName
-        connection.addProperty(name, resource.getCallName());
-        // name+ADDR->address
-        connection.addAddress(name, resource.getAddress());
+        // name->address
+        connection.addProperty(name, resource.getAddress());
         // name+ABI->abi
         connection.addAbi(name, resource.getAbi());
       }
 
-      // after connection addProperty , need use proxy callName
+      // after connection addProperty , need use proxy address
       for (ChainMakerStubConfig.Resource resource : resources) {
         // registerCNS and addResource
         connection.registerCNS("a.b." + resource.getName(), resource.getAddress());

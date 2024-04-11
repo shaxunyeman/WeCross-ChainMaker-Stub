@@ -5,20 +5,38 @@ import com.webank.wecross.stub.Connection;
 import com.webank.wecross.stub.Driver;
 import com.webank.wecross.stub.StubFactory;
 import com.webank.wecross.stub.WeCrossContext;
+import com.webank.wecross.stub.chainmaker.account.ChainMakerAccountFactory;
 import com.webank.wecross.stub.chainmaker.common.ChainMakerConstant;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
+import org.fisco.bcos.sdk.crypto.CryptoSuite;
+import org.fisco.bcos.sdk.model.CryptoType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ChainMakerBaseFactory implements StubFactory {
-  private final Logger logger = LoggerFactory.getLogger(ChainMakerBaseFactory.class);
+public class ChainMakerBaseStubFactory implements StubFactory {
+  private final Logger logger = LoggerFactory.getLogger(ChainMakerBaseStubFactory.class);
+
+  private final String stubType;
+  private final ChainMakerAccountFactory chainMakerAccountFactory;
+
+  public ChainMakerBaseStubFactory(String stubType) {
+    this.stubType = stubType;
+    this.chainMakerAccountFactory = ChainMakerAccountFactory.getInstance(stubType);
+  }
+
+  public boolean isGMStub() {
+    return StringUtils.endsWith(stubType, ChainMakerConstant.GM_STUB_SUFFIX);
+  }
 
   @Override
   public void init(WeCrossContext weCrossContext) {}
 
   @Override
   public Driver newDriver() {
-    return null;
+    CryptoSuite cryptoSuite =
+        isGMStub() ? new CryptoSuite(CryptoType.SM_TYPE) : new CryptoSuite(CryptoType.ECDSA_TYPE);
+    return new ChainMakerDriver(cryptoSuite);
   }
 
   @Override
@@ -30,20 +48,12 @@ public class ChainMakerBaseFactory implements StubFactory {
       // check proxy contract
       if (!connection.hasProxyDeployed()) {
         String errorMsg = "WeCrossProxy error: WeCrossProxy contract has not been deployed!";
-        // String help =
-        // "Please deploy WeCrossProxy contract by: "
-        // + ProxyContractDeployment.getUsage(path);
-        // System.out.println(errorMsg + "\n" + help);
         throw new Exception(errorMsg);
       }
 
       // check hub contract
       if (!connection.hasHubDeployed()) {
         String errorMsg = "WeCrossHub error: WeCrossHub contract has not been deployed!";
-        // String help =
-        // "Please deploy WeCrossHub contract by: "
-        // + HubContractDeployment.getUsage(path);
-        // System.out.println(errorMsg + "\n" + help);
         throw new Exception(errorMsg);
       }
 
@@ -55,8 +65,8 @@ public class ChainMakerBaseFactory implements StubFactory {
   }
 
   @Override
-  public Account newAccount(Map<String, Object> map) {
-    return null;
+  public Account newAccount(Map<String, Object> properties) {
+    return chainMakerAccountFactory.build(properties);
   }
 
   @Override

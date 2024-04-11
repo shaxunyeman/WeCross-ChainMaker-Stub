@@ -18,7 +18,7 @@ public class ChainMakerStubConfig {
   private List<Resource> resources;
 
   public boolean isGMStub() {
-    return StringUtils.containsIgnoreCase(common.getType(), ChainMakerConstant.GM_STUB_SUFFIX);
+    return StringUtils.endsWith(common.getType(), ChainMakerConstant.GM_STUB_SUFFIX);
   }
 
   public CryptoSuite getStubCryptoSuite() {
@@ -189,7 +189,6 @@ public class ChainMakerStubConfig {
   public static class Resource {
     private String type;
     private String name;
-    private String callName;
     private String address;
     private String abi;
 
@@ -207,14 +206,6 @@ public class ChainMakerStubConfig {
 
     public void setName(String name) {
       this.name = name;
-    }
-
-    public String getCallName() {
-      return callName;
-    }
-
-    public void setCallName(String callName) {
-      this.callName = callName;
     }
 
     public String getAddress() {
@@ -241,9 +232,6 @@ public class ChainMakerStubConfig {
           + '\''
           + ", name='"
           + name
-          + '\''
-          + ", callName='"
-          + callName
           + '\''
           + ", address='"
           + address
@@ -285,12 +273,7 @@ public class ChainMakerStubConfig {
       ResourceInfo resourceInfo = new ResourceInfo();
       resourceInfo.setName(resource.getName());
       resourceInfo.setStubType(this.getCommon().getType());
-      resourceInfo.getProperties().put(resource.getName(), resource.getCallName());
-      resourceInfo
-          .getProperties()
-          .put(
-              resource.getName() + ChainMakerConstant.CHAIN_MAKER_PROPERTY_ADDRESS_SUFFIX,
-              resource.getAddress());
+      resourceInfo.getProperties().put(resource.getName(), resource.getAddress());
       resourceInfo
           .getProperties()
           .put(

@@ -165,11 +165,11 @@ public class ChainMakerConnection implements Connection {
     try {
       TransactionParams cmRequest =
           objectMapper.readValue(request.getData(), TransactionParams.class);
-      String contractCallName = cmRequest.getContractCallName();
+      String contractAddress = cmRequest.getContractAddress();
       String contractMethodId = cmRequest.getContractMethodId();
       Map<String, byte[]> contractMethodParams = cmRequest.getContractMethodParams();
       ResultOuterClass.TxResponse txResponse =
-          clientWrapper.queryContract(contractCallName, contractMethodId, contractMethodParams);
+          clientWrapper.queryContract(contractAddress, contractMethodId, contractMethodParams);
       if (logger.isDebugEnabled()) {
         logger.debug("handleAsyncCallRequest: {}", JsonFormat.printer().print(txResponse));
       }
@@ -351,14 +351,6 @@ public class ChainMakerConnection implements Connection {
 
   public String getAbi(String key) {
     return getProperty(key + ChainMakerConstant.CHAIN_MAKER_PROPERTY_ABI_SUFFIX);
-  }
-
-  public void addAddress(String key, String value) {
-    addProperty(key + ChainMakerConstant.CHAIN_MAKER_PROPERTY_ADDRESS_SUFFIX, value);
-  }
-
-  public String getAddress(String key) {
-    return getProperty(key + ChainMakerConstant.CHAIN_MAKER_PROPERTY_ADDRESS_SUFFIX);
   }
 
   public AbstractClientWrapper getClientWrapper() {

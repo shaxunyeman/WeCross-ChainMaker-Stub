@@ -1,11 +1,12 @@
 package com.webank.wecross.stub.chainmaker.protocal;
 
 import com.webank.wecross.stub.TransactionRequest;
+import java.util.Arrays;
 import java.util.Map;
 
 public class TransactionParams {
   private TransactionRequest transactionRequest;
-  private String contractCallName;
+  private String contractAddress;
   private String contractMethodId;
   private Map<String, byte[]> contractMethodParams;
   private byte[] signData;
@@ -21,12 +22,12 @@ public class TransactionParams {
 
   public TransactionParams(
       TransactionRequest transactionRequest,
-      String contractCallName,
+      String contractAddress,
       String contractMethodId,
       Map<String, byte[]> contractMethodParams,
       SUB_TYPE type) {
     this.transactionRequest = transactionRequest;
-    this.contractCallName = contractCallName;
+    this.contractAddress = contractAddress;
     this.contractMethodId = contractMethodId;
     this.contractMethodParams = contractMethodParams;
     this.subType = type;
@@ -46,12 +47,12 @@ public class TransactionParams {
     this.transactionRequest = transactionRequest;
   }
 
-  public String getContractCallName() {
-    return contractCallName;
+  public String getContractAddress() {
+    return contractAddress;
   }
 
-  public void setContractCallName(String contractCallName) {
-    this.contractCallName = contractCallName;
+  public void setContractAddress(String contractAddress) {
+    this.contractAddress = contractAddress;
   }
 
   public String getContractMethodId() {
@@ -95,16 +96,21 @@ public class TransactionParams {
     return "TransactionParams{"
         + "transactionRequest="
         + transactionRequest
-        + ", contractName='"
-        + contractCallName
+        + ", contractAddress='"
+        + contractAddress
         + '\''
-        + ", contractMethod='"
+        + ", contractMethodId='"
         + contractMethodId
         + '\''
         + ", contractMethodParams="
         + contractMethodParams
+        + ", signData="
+        + Arrays.toString(signData)
         + ", subType="
         + subType
+        + ", abi='"
+        + abi
+        + '\''
         + '}';
   }
 }

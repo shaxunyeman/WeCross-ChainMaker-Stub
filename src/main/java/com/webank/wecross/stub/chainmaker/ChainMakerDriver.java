@@ -680,16 +680,14 @@ public class ChainMakerDriver implements Driver {
 
       checkProperties(properties);
 
-      String proxyContractCallName =
+      String proxyContractAddress =
           chainMakerConnection.getProperty(ChainMakerConstant.CHAIN_MAKER_PROXY_NAME);
       Path path = context.getPath();
       String pathStr = path.toString();
       String name = path.getResource();
-      // contract client call name
-      String contractCallName = chainMakerConnection.getProperty(name);
+
       String contractAbi = chainMakerConnection.getAbi(name);
-      // contract evm call address
-      String contractAddress = chainMakerConnection.getAddress(name);
+      String contractAddress = chainMakerConnection.getProperty(name);
 
       if (contractAbi == null) {
         throw new ChainMakerStubException(
@@ -732,12 +730,7 @@ public class ChainMakerDriver implements Driver {
 
       if (logger.isDebugEnabled()) {
         logger.debug(
-            " name:{},callName:{}, address: {}, method: {}, args: {}",
-            name,
-            contractCallName,
-            contractAddress,
-            method,
-            args);
+            " name:{}, address: {}, method: {}, args: {}", name, contractAddress, method, args);
       }
 
       Map<String, byte[]> params = new HashMap<>();
@@ -748,7 +741,7 @@ public class ChainMakerDriver implements Driver {
       TransactionParams transaction =
           new TransactionParams(
               request,
-              proxyContractCallName,
+              proxyContractAddress,
               functionEncoder.buildMethodId(proxyMethod),
               params,
               TransactionParams.SUB_TYPE.CALL_BY_PROXY);
@@ -838,11 +831,9 @@ public class ChainMakerDriver implements Driver {
 
       Path path = context.getPath();
       String name = path.getResource();
-      // contract client call name
-      String contractCallName = chainMakerConnection.getProperty(name);
+
       String contractAbi = chainMakerConnection.getAbi(name);
-      // contract evm call address
-      String contractAddress = chainMakerConnection.getAddress(name);
+      String contractAddress = chainMakerConnection.getProperty(name);
 
       if (contractAbi == null) {
         throw new ChainMakerStubException(
@@ -870,12 +861,7 @@ public class ChainMakerDriver implements Driver {
 
       if (logger.isDebugEnabled()) {
         logger.debug(
-            " name:{},callName:{}, address: {}, method: {}, args: {}",
-            name,
-            contractCallName,
-            contractAddress,
-            method,
-            args);
+            " name:{},address: {}, method: {}, args: {}", name, contractAddress, method, args);
       }
 
       Map<String, byte[]> params = new HashMap<>();
@@ -884,7 +870,7 @@ public class ChainMakerDriver implements Driver {
       TransactionParams transaction =
           new TransactionParams(
               request,
-              contractCallName,
+              contractAddress,
               functionEncoder.buildMethodId(abiDefinition.getMethodSignatureAsString()),
               params,
               TransactionParams.SUB_TYPE.CALL);
@@ -972,16 +958,14 @@ public class ChainMakerDriver implements Driver {
 
       checkProperties(properties);
 
-      String proxyContractCallName =
+      String proxyContractAddress =
           chainMakerConnection.getProperty(ChainMakerConstant.CHAIN_MAKER_PROXY_NAME);
       Path path = context.getPath();
       String pathStr = path.toString();
       String name = path.getResource();
-      // contract client call name
-      String contractCallName = chainMakerConnection.getProperty(name);
+
       String contractAbi = chainMakerConnection.getAbi(name);
-      // contract evm call address
-      String contractAddress = chainMakerConnection.getAddress(name);
+      String contractAddress = chainMakerConnection.getProperty(name);
 
       if (contractAbi == null) {
         throw new ChainMakerStubException(
@@ -1045,12 +1029,7 @@ public class ChainMakerDriver implements Driver {
 
       if (logger.isDebugEnabled()) {
         logger.debug(
-            " name:{},callName:{}, address: {}, method: {}, args: {}",
-            name,
-            contractCallName,
-            contractAddress,
-            method,
-            args);
+            " name:{},address: {}, method: {}, args: {}", name, contractAddress, method, args);
       }
 
       Map<String, byte[]> params = new HashMap<>();
@@ -1062,7 +1041,7 @@ public class ChainMakerDriver implements Driver {
       org.chainmaker.pb.common.Request.Payload payload =
           ClientUtility.createPayload(
               nativeClient.getChainId(),
-              proxyContractCallName,
+              proxyContractAddress,
               functionEncoder.buildMethodId(proxyMethod),
               params);
       User clientUser = nativeClient.getClientUser();
@@ -1159,11 +1138,9 @@ public class ChainMakerDriver implements Driver {
 
       Path path = context.getPath();
       String name = path.getResource();
-      // contract client call name
-      String contractCallName = chainMakerConnection.getProperty(name);
+
       String contractAbi = chainMakerConnection.getAbi(name);
-      // contract evm call address
-      String contractAddress = chainMakerConnection.getAddress(name);
+      String contractAddress = chainMakerConnection.getProperty(name);
 
       if (contractAbi == null) {
         throw new ChainMakerStubException(
@@ -1194,12 +1171,7 @@ public class ChainMakerDriver implements Driver {
 
       if (logger.isDebugEnabled()) {
         logger.debug(
-            " name:{},callName:{}, address: {}, method: {}, args: {}",
-            name,
-            contractCallName,
-            contractAddress,
-            method,
-            args);
+            " name:{},address: {}, method: {}, args: {}", name, contractAddress, method, args);
       }
 
       Map<String, byte[]> params = new HashMap<>();
@@ -1209,7 +1181,7 @@ public class ChainMakerDriver implements Driver {
       org.chainmaker.pb.common.Request.Payload payload =
           ClientUtility.createPayload(
               nativeClient.getChainId(),
-              contractCallName,
+              contractAddress,
               functionEncoder.buildMethodId(abiDefinition.getMethodSignatureAsString()),
               params);
       User clientUser = nativeClient.getClientUser();

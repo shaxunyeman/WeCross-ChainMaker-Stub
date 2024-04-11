@@ -39,12 +39,10 @@ public class ChainMakerStubConfigParserTest {
     assertTrue(Objects.nonNull(resources) && resources.size() == 2);
     assertEquals(resources.get(0).getType(), "CM_CONTRACT");
     assertEquals(resources.get(0).getName(), "WeCrossProxy");
-    assertEquals(resources.get(0).getCallName(), "fb5387fc18d386937458551910e307dffb8bf780");
     assertEquals(resources.get(0).getAddress(), "0x16d09a2580c2ac8ed649c1df35b93061de1fa130");
 
     assertEquals(resources.get(1).getType(), "CM_CONTRACT");
     assertEquals(resources.get(1).getName(), "WeCrossHub");
-    assertEquals(resources.get(1).getCallName(), "bc1ea1cbda9dfcdaeac321e170dd07b62a187908");
     assertEquals(resources.get(1).getAddress(), "0x3928313d50222ae2ec908a99a83d5b6a56e56a7c");
   }
 }
