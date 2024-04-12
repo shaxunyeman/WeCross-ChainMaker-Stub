@@ -383,11 +383,10 @@ public class ChainMakerDriver implements Driver {
     transaction.setResource(resource);
     // query ABI
     String finalMethodId = methodId;
-    // TODO: 获取abi
-    String abi = "";
+    String contractAbi = ((ChainMakerConnection) connection).getAbi(resource);
     try {
       ABIDefinition function =
-          abiDefinitionFactory.loadABI(abi).getMethodIDToFunctions().get(finalMethodId);
+          abiDefinitionFactory.loadABI(contractAbi).getMethodIDToFunctions().get(finalMethodId);
       if (Objects.isNull(function)) {
         logger.warn("Maybe abi is upgraded, Load function failed, methodId: {}", finalMethodId);
       } else {
@@ -529,11 +528,10 @@ public class ChainMakerDriver implements Driver {
 
       String finalMethodId = methodId;
       String finalInput = input;
-      // TODO: get abi
-      String abi = "";
+      String contractAbi = ((ChainMakerConnection) connection).getAbi(resource);
 
       ABIDefinition function =
-          abiDefinitionFactory.loadABI(abi).getMethodIDToFunctions().get(finalMethodId);
+          abiDefinitionFactory.loadABI(contractAbi).getMethodIDToFunctions().get(finalMethodId);
 
       if (Objects.isNull(function)) {
         logger.warn("Maybe abi is upgraded, Load function failed, methodId: {}", finalMethodId);
