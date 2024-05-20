@@ -1,0 +1,3 @@
+[account]
+    type = "CHAIN_MAKER"
+    accountFile = '439dea8f34bc33f61ef56151319769e209f83b66.key'

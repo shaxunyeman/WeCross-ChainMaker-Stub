@@ -23,10 +23,10 @@
 [[resources]]
     type = 'CM_CONTRACT'
     name = 'WeCrossProxy'
-    address = '0x16d09a2580c2ac8ed649c1df35b93061de1fa130'
+    address = '16d09a2580c2ac8ed649c1df35b93061de1fa130'
     abi = ''
 [[resources]]
     type = 'CM_CONTRACT'
     name = 'WeCrossHub'
-    address = '0x3928313d50222ae2ec908a99a83d5b6a56e56a7c'
+    address = '3928313d50222ae2ec908a99a83d5b6a56e56a7c'
     abi = ''

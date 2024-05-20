@@ -7,6 +7,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.fisco.bcos.sdk.crypto.CryptoSuite;
 import org.fisco.bcos.sdk.model.CryptoType;
+import org.fisco.bcos.sdk.utils.Numeric;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -209,7 +210,8 @@ public class ChainMakerStubConfig {
     }
 
     public String getAddress() {
-      return address;
+      // cleanHexPrefix 0x
+      return Numeric.cleanHexPrefix(address);
     }
 
     public void setAddress(String address) {

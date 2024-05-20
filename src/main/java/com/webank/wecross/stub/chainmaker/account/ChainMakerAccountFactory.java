@@ -1,14 +1,26 @@
 package com.webank.wecross.stub.chainmaker.account;
 
+import com.google.common.io.Files;
+import com.webank.wecross.stub.chainmaker.config.ChainMakerAccountConfig;
+import com.webank.wecross.stub.chainmaker.config.ChainMakerAccountConfigParser;
+import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Map;
 import org.chainmaker.sdk.User;
 import org.chainmaker.sdk.config.AuthType;
+import org.chainmaker.sdk.crypto.ChainMakerCryptoSuiteException;
 import org.chainmaker.sdk.utils.CryptoUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.core.io.support.ResourcePatternResolver;
 
 public class ChainMakerAccountFactory {
 
@@ -90,5 +102,30 @@ public class ChainMakerAccountFactory {
       logger.error("ChainMakerPublicAccount exception: {}", e.getMessage());
       return null;
     }
+  }
+
+  public ChainMakerPublicAccount build(String name, String accountPath)
+      throws IOException, ChainMakerCryptoSuiteException, NoSuchAlgorithmException,
+          InvalidKeySpecException, NoSuchProviderException {
+    String accountConfigFile = accountPath + File.separator + "account.toml";
+    logger.debug("Loading account.toml: {}", accountConfigFile);
+
+    ChainMakerAccountConfigParser parser = new ChainMakerAccountConfigParser(accountConfigFile);
+    ChainMakerAccountConfig chainMakerAccountConfig = parser.loadConfig();
+    String type = chainMakerAccountConfig.getAccount().getType();
+    String accountFileName = chainMakerAccountConfig.getAccount().getAccountFile();
+    String accountFilePath = accountPath + File.separator + accountFileName;
+    ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+    Resource accountFileResource = resolver.getResource(accountFilePath);
+    PrivateKey privateKey =
+        CryptoUtils.getPrivateKeyFromBytes(Files.toByteArray(accountFileResource.getFile()));
+    PublicKey publicKey = CryptoUtils.getPublicKeyFromPrivateKey(privateKey);
+
+    // TODO no orgId ?
+    User user = new User("");
+    user.setAuthType(AuthType.Public.getMsg());
+    user.setPrivateKey(privateKey);
+    user.setPublicKey(publicKey);
+    return new ChainMakerPublicAccount(name, type, user);
   }
 }
