@@ -20,6 +20,8 @@ public class TransactionParams {
     CALL
   }
 
+  public TransactionParams() {}
+
   public TransactionParams(
       TransactionRequest transactionRequest,
       String contractAddress,

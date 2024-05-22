@@ -9,7 +9,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.chainmaker.pb.common.ChainmakerBlock;
 import org.chainmaker.pb.common.ChainmakerTransaction;
-import org.fisco.bcos.sdk.utils.ObjectMapperFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,9 +72,7 @@ public class BlockUtility {
    * @return
    */
   public static Block convertToBlock(byte[] blockBytes, boolean onlyHeader) throws IOException {
-    ChainmakerBlock.BlockInfo blockInfo =
-        ObjectMapperFactory.getObjectMapper()
-            .readValue(blockBytes, ChainmakerBlock.BlockInfo.class);
+    ChainmakerBlock.BlockInfo blockInfo = ChainmakerBlock.BlockInfo.parseFrom(blockBytes);
     ChainmakerBlock.Block chainmakerBlock = blockInfo.getBlock();
     if (logger.isDebugEnabled()) {
       logger.debug(

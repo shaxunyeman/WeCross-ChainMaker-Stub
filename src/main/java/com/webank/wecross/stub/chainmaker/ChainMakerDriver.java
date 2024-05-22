@@ -108,16 +108,13 @@ public class ChainMakerDriver implements Driver {
           {
             if (subType == TransactionParams.SUB_TYPE.SEND_TX_BY_PROXY) {
               org.chainmaker.pb.common.Request.TxRequest txRequest =
-                  objectMapper.readValue(
-                      transactionParams.getSignData(),
-                      org.chainmaker.pb.common.Request.TxRequest.class);
+                  org.chainmaker.pb.common.Request.TxRequest.parseFrom(
+                      transactionParams.getSignData());
               byte[] value =
                   txRequest.getPayload().getParametersList().get(0).getValue().toByteArray();
-              String valueData = Hex.toHexString(value);
+              String valueData = new String(value);
               if (valueData.startsWith(
-                  Numeric.cleanHexPrefix(
-                      functionEncoder.buildMethodId(
-                          FunctionUtility.ProxySendTransactionTXMethod)))) {
+                  functionEncoder.buildMethodId(FunctionUtility.ProxySendTransactionTXMethod))) {
                 Tuple6<String, String, BigInteger, String, String, byte[]>
                     sendTransactionProxyFunctionInput =
                         FunctionUtility.getSendTransactionProxyFunctionInput(valueData);
@@ -126,7 +123,6 @@ public class ChainMakerDriver implements Driver {
                 Tuple3<String, String, byte[]> sendTransactionProxyFunctionInput =
                     FunctionUtility.getSendTransactionProxyWithoutTxIdFunctionInput(valueData);
                 abi = Hex.toHexString(sendTransactionProxyFunctionInput.getValue3());
-                abi = abi.substring(FunctionUtility.MethodIDLength);
               }
             } else {
               byte[] contractMethodParamsBytes =
@@ -147,7 +143,6 @@ public class ChainMakerDriver implements Driver {
                 abi = abi.substring(FunctionUtility.MethodIDLength);
               }
             }
-
             List<ABIDefinition> abiDefinitions =
                 abiDefinitionFactory
                     .loadABI(transactionParams.getAbi())
@@ -159,11 +154,10 @@ public class ChainMakerDriver implements Driver {
             }
 
             byte[] encodedArgs =
-                Hex.decode(
-                    abiCodec.encodeMethodFromString(
-                        contractAbi,
-                        method,
-                        args != null ? Arrays.asList(args) : new ArrayList<>()));
+                abiCodec
+                    .encodeMethodFromString(
+                        contractAbi, method, args != null ? Arrays.asList(args) : new ArrayList<>())
+                    .getBytes();
             encodeAbi = Hex.toHexString(encodedArgs);
             break;
           }
@@ -183,13 +177,11 @@ public class ChainMakerDriver implements Driver {
                   contractMethodParams.get(ChainMakerConstant.CHAIN_MAKER_CONTRACT_ARGS_EVM_PARAM);
               abi = Hex.toHexString(orgEncodeArgs);
             }
-            FunctionUtility.newDefaultFunction(method, args);
             byte[] encodedArgs =
-                Hex.decode(
-                    abiCodec.encodeMethodFromString(
-                        contractAbi,
-                        method,
-                        args != null ? Arrays.asList(args) : new ArrayList<>()));
+                abiCodec
+                    .encodeMethodFromString(
+                        contractAbi, method, args != null ? Arrays.asList(args) : new ArrayList<>())
+                    .getBytes();
             encodeAbi = Hex.toHexString(encodedArgs);
             break;
           }
@@ -272,7 +264,8 @@ public class ChainMakerDriver implements Driver {
       long blockNumber, boolean onlyHeader, Connection connection, GetBlockCallback callback) {
     // 构建Request
     byte[] blockNumberBytes = BigInteger.valueOf(blockNumber).toByteArray();
-    Request request = Request.newRequest(ChainMakerRequestType.GET_BLOCK_NUMBER, blockNumberBytes);
+    Request request =
+        Request.newRequest(ChainMakerRequestType.GET_BLOCK_BY_NUMBER, blockNumberBytes);
     connection.asyncSend(
         request,
         response -> {
@@ -287,8 +280,7 @@ public class ChainMakerDriver implements Driver {
           } else {
             try {
               ChainmakerBlock.BlockInfo blockInfo =
-                  ObjectMapperFactory.getObjectMapper()
-                      .readValue(response.getData(), ChainmakerBlock.BlockInfo.class);
+                  ChainmakerBlock.BlockInfo.parseFrom(response.getData());
               Block block = BlockUtility.convertToBlock(response.getData(), onlyHeader);
               block.setRawBytes(response.getData());
               if (block.getTransactionsHashes().isEmpty()) {
@@ -650,9 +642,8 @@ public class ChainMakerDriver implements Driver {
           "Not ChainMakerAccount, account name: " + account.getClass().getName());
     }
     User user = ((ChainMakerPublicAccount) account).getUser();
-    PrivateKey privateKey = null;
     try {
-      privateKey = CryptoUtils.getPrivateKeyFromBytes(user.getPriBytes());
+      PrivateKey privateKey = CryptoUtils.getPrivateKeyFromBytes(user.getPriBytes());
       // TODO: hashType
       return user.getCryptoSuite().rsaSign(privateKey, message, "");
     } catch (Exception e) {
@@ -756,7 +747,7 @@ public class ChainMakerDriver implements Driver {
                     response.getErrorCode(), response.getErrorMessage());
               }
               ResultOuterClass.TxResponse txResponse =
-                  objectMapper.readValue(response.getData(), ResultOuterClass.TxResponse.class);
+                  ResultOuterClass.TxResponse.parseFrom(response.getData());
               if (logger.isDebugEnabled()) {
                 logger.debug(
                     "call result, code: {}, msg: {}",
@@ -853,9 +844,10 @@ public class ChainMakerDriver implements Driver {
                           ChainMakerStatusCode.MethodNotExist, "method not exist: " + method));
 
       byte[] encodedArgs =
-          Hex.decode(
-              abiCodec.encodeMethodFromString(
-                  contractAbi, method, args != null ? Arrays.asList(args) : new ArrayList<>()));
+          abiCodec
+              .encodeMethodFromString(
+                  contractAbi, method, args != null ? Arrays.asList(args) : new ArrayList<>())
+              .getBytes();
 
       if (logger.isDebugEnabled()) {
         logger.debug(
@@ -886,7 +878,7 @@ public class ChainMakerDriver implements Driver {
                     response.getErrorCode(), response.getErrorMessage());
               }
               ResultOuterClass.TxResponse txResponse =
-                  objectMapper.readValue(response.getData(), ResultOuterClass.TxResponse.class);
+                  ResultOuterClass.TxResponse.parseFrom(response.getData());
               if (logger.isDebugEnabled()) {
                 logger.debug(
                     "call result, code: {}, msg: {}",
@@ -988,9 +980,10 @@ public class ChainMakerDriver implements Driver {
                           ChainMakerStatusCode.MethodNotExist, "method not exist: " + method));
 
       byte[] encodedArgs =
-          Hex.decode(
-              abiCodec.encodeMethodFromString(
-                  contractAbi, method, args != null ? Arrays.asList(args) : new ArrayList<>()));
+          abiCodec
+              .encodeMethodFromString(
+                  contractAbi, method, args != null ? Arrays.asList(args) : new ArrayList<>())
+              .getBytes();
 
       String uniqueID = (String) request.getOptions().get(StubConstant.TRANSACTION_UNIQUE_ID);
       String uid =
@@ -1048,9 +1041,7 @@ public class ChainMakerDriver implements Driver {
               payload, clientUser.getOrgId(), user, nativeClient.getHash());
       TransactionParams transactionParams =
           new TransactionParams(
-              request,
-              objectMapper.writeValueAsBytes(txRequest),
-              TransactionParams.SUB_TYPE.SEND_TX);
+              request, txRequest.toByteArray(), TransactionParams.SUB_TYPE.SEND_TX_BY_PROXY);
       transactionParams.setAbi(contractAbi);
       Request req =
           Request.newRequest(
@@ -1065,7 +1056,7 @@ public class ChainMakerDriver implements Driver {
                     response.getErrorCode(), response.getErrorMessage());
               }
               ResultOuterClass.TxResponse txResponse =
-                  objectMapper.readValue(response.getData(), ResultOuterClass.TxResponse.class);
+                  ResultOuterClass.TxResponse.parseFrom(response.getData());
               if (logger.isDebugEnabled()) {
                 logger.debug(
                     "send transaction result, code: {}, msg: {}",
@@ -1188,9 +1179,7 @@ public class ChainMakerDriver implements Driver {
               payload, clientUser.getOrgId(), user, nativeClient.getHash());
       TransactionParams transactionParams =
           new TransactionParams(
-              request,
-              objectMapper.writeValueAsBytes(txRequest),
-              TransactionParams.SUB_TYPE.SEND_TX_BY_PROXY);
+              request, txRequest.toByteArray(), TransactionParams.SUB_TYPE.SEND_TX);
       transactionParams.setAbi(contractAbi);
       Request req =
           Request.newRequest(
@@ -1205,7 +1194,7 @@ public class ChainMakerDriver implements Driver {
                     response.getErrorCode(), response.getErrorMessage());
               }
               ResultOuterClass.TxResponse txResponse =
-                  objectMapper.readValue(response.getData(), ResultOuterClass.TxResponse.class);
+                  ResultOuterClass.TxResponse.parseFrom(response.getData());
               if (logger.isDebugEnabled()) {
                 logger.debug(
                     "call result, code: {}, msg: {}",

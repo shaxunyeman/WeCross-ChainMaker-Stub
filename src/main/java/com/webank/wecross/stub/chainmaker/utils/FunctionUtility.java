@@ -23,7 +23,6 @@ import org.fisco.bcos.sdk.abi.datatypes.generated.tuples.generated.Tuple2;
 import org.fisco.bcos.sdk.abi.datatypes.generated.tuples.generated.Tuple3;
 import org.fisco.bcos.sdk.abi.datatypes.generated.tuples.generated.Tuple4;
 import org.fisco.bcos.sdk.abi.datatypes.generated.tuples.generated.Tuple6;
-import org.fisco.bcos.sdk.utils.Hex;
 import org.fisco.bcos.sdk.utils.Numeric;
 
 /**
@@ -109,7 +108,7 @@ public class FunctionUtility {
       throws IOException {
     String methodId = functionEncoder.buildMethodId(methodSignature);
     ByteArrayOutputStream params = new ByteArrayOutputStream();
-    params.write(Hex.decode(methodId));
+    params.write(Numeric.hexStringToByteArray(methodId));
     if (abi != null && abi.length != 0) {
       params.write(abi);
     }
@@ -147,7 +146,7 @@ public class FunctionUtility {
       throws IOException {
     String methodId = functionEncoder.buildMethodId(methodSignature);
     ByteArrayOutputStream params = new ByteArrayOutputStream();
-    params.write(Hex.decode(methodId));
+    params.write(Numeric.hexStringToByteArray(methodId));
     if (abi != null && abi.length != 0) {
       params.write(abi);
     }

@@ -106,7 +106,7 @@ public class ChainMakerConnection implements Connection {
       }
       response.setErrorCode(ChainMakerStatusCode.Success);
       response.setErrorMessage(ChainMakerStatusCode.getStatusMessage(ChainMakerStatusCode.Success));
-      response.setData(objectMapper.writeValueAsBytes(transactionInfo));
+      response.setData(transactionInfo.toByteArray());
     } catch (Exception e) {
       logger.warn("handleAsyncGetTransaction Exception, e: ", e);
       response.setErrorCode(ChainMakerStatusCode.UnclassifiedError);
@@ -131,7 +131,7 @@ public class ChainMakerConnection implements Connection {
       }
       response.setErrorCode(ChainMakerStatusCode.Success);
       response.setErrorMessage(ChainMakerStatusCode.getStatusMessage(ChainMakerStatusCode.Success));
-      response.setData(objectMapper.writeValueAsBytes(blockInfo));
+      response.setData(blockInfo.toByteArray());
     } catch (Exception e) {
       logger.warn("handleAsyncGetBlockRequest Exception, e: ", e);
       response.setErrorCode(ChainMakerStatusCode.UnclassifiedError);
@@ -175,7 +175,7 @@ public class ChainMakerConnection implements Connection {
       }
       response.setErrorCode(ChainMakerStatusCode.Success);
       response.setErrorMessage(ChainMakerStatusCode.getStatusMessage(ChainMakerStatusCode.Success));
-      response.setData(objectMapper.writeValueAsBytes(txResponse));
+      response.setData(txResponse.toByteArray());
     } catch (Exception e) {
       logger.warn("handleAsyncCallRequest Exception:", e);
       response.setErrorCode(ChainMakerStatusCode.HandleCallRequestFailed);
@@ -192,16 +192,14 @@ public class ChainMakerConnection implements Connection {
           objectMapper.readValue(request.getData(), TransactionParams.class);
 
       org.chainmaker.pb.common.Request.TxRequest txRequest =
-          objectMapper.readValue(
-              cmRequest.getSignData(), org.chainmaker.pb.common.Request.TxRequest.class);
-
+          org.chainmaker.pb.common.Request.TxRequest.parseFrom(cmRequest.getSignData());
       ResultOuterClass.TxResponse txResponse = clientWrapper.sendTxRequest(txRequest);
       if (logger.isDebugEnabled()) {
         logger.debug("handleAsyncTransactionRequest: {}", JsonFormat.printer().print(txResponse));
       }
       response.setErrorCode(ChainMakerStatusCode.Success);
       response.setErrorMessage(ChainMakerStatusCode.getStatusMessage(ChainMakerStatusCode.Success));
-      response.setData(objectMapper.writeValueAsBytes(txResponse));
+      response.setData(txResponse.toByteArray());
     } catch (Exception e) {
       logger.warn("handleAsyncTransactionRequest Exception:", e);
       response.setErrorCode(ChainMakerStatusCode.HandleCallRequestFailed);
