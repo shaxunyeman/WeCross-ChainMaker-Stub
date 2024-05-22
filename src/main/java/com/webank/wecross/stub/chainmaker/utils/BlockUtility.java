@@ -6,9 +6,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.lang3.ObjectUtils;
-import org.bouncycastle.util.encoders.Hex;
 import org.chainmaker.pb.common.ChainmakerBlock;
 import org.chainmaker.pb.common.ChainmakerTransaction;
+import org.fisco.bcos.sdk.utils.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,11 +68,10 @@ public class BlockUtility {
   }
 
   /**
-   * @param blockBytes
+   * @param blockInfo
    * @return
    */
-  public static Block convertToBlock(byte[] blockBytes, boolean onlyHeader) throws IOException {
-    ChainmakerBlock.BlockInfo blockInfo = ChainmakerBlock.BlockInfo.parseFrom(blockBytes);
+  public static Block convertToBlock(ChainmakerBlock.BlockInfo blockInfo, boolean onlyHeader) {
     ChainmakerBlock.Block chainmakerBlock = blockInfo.getBlock();
     if (logger.isDebugEnabled()) {
       logger.debug(
@@ -81,7 +80,7 @@ public class BlockUtility {
           chainmakerBlock.getHeader().getBlockHash());
     }
     Block stubBlock = convertToBlock(chainmakerBlock, onlyHeader);
-    stubBlock.setRawBytes(blockBytes);
+    stubBlock.setRawBytes(blockInfo.toByteArray());
     return stubBlock;
   }
 }

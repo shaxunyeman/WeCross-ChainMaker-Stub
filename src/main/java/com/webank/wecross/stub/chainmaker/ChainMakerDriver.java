@@ -27,7 +27,9 @@ import com.webank.wecross.stub.chainmaker.protocal.TransactionProof;
 import com.webank.wecross.stub.chainmaker.utils.BlockUtility;
 import com.webank.wecross.stub.chainmaker.utils.FunctionUtility;
 import com.webank.wecross.stub.chainmaker.utils.RevertMessage;
+import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidParameterException;
 import java.security.PrivateKey;
 import java.util.ArrayList;
@@ -110,9 +112,8 @@ public class ChainMakerDriver implements Driver {
               org.chainmaker.pb.common.Request.TxRequest txRequest =
                   org.chainmaker.pb.common.Request.TxRequest.parseFrom(
                       transactionParams.getSignData());
-              byte[] value =
-                  txRequest.getPayload().getParametersList().get(0).getValue().toByteArray();
-              String valueData = new String(value);
+              String valueData =
+                  txRequest.getPayload().getParametersList().get(0).getValue().toStringUtf8();
               if (valueData.startsWith(
                   functionEncoder.buildMethodId(FunctionUtility.ProxySendTransactionTXMethod))) {
                 Tuple6<String, String, BigInteger, String, String, byte[]>
@@ -123,13 +124,15 @@ public class ChainMakerDriver implements Driver {
                 Tuple3<String, String, byte[]> sendTransactionProxyFunctionInput =
                     FunctionUtility.getSendTransactionProxyWithoutTxIdFunctionInput(valueData);
                 abi = Hex.toHexString(sendTransactionProxyFunctionInput.getValue3());
+                abi = abi.substring(FunctionUtility.MethodIDLength);
               }
             } else {
               byte[] contractMethodParamsBytes =
                   transactionParams
                       .getContractMethodParams()
                       .get(ChainMakerConstant.CHAIN_MAKER_CONTRACT_ARGS_EVM_PARAM);
-              String contractMethodParams = Hex.toHexString(contractMethodParamsBytes);
+              String contractMethodParams =
+                  new String(contractMethodParamsBytes, StandardCharsets.UTF_8);
               if (contractMethodParams.startsWith(
                   functionEncoder.buildMethodId(
                       FunctionUtility.ProxyCallWithTransactionIdMethod))) {
@@ -153,12 +156,7 @@ public class ChainMakerDriver implements Driver {
                   " found no method in abi, method: " + transactionRequest.getMethod());
             }
 
-            byte[] encodedArgs =
-                abiCodec
-                    .encodeMethodFromString(
-                        contractAbi, method, args != null ? Arrays.asList(args) : new ArrayList<>())
-                    .getBytes();
-            encodeAbi = Hex.toHexString(encodedArgs);
+            encodeAbi = encodeFunctionArgs(abiDefinitions.get(0), args);
             break;
           }
         case SEND_TX:
@@ -168,21 +166,17 @@ public class ChainMakerDriver implements Driver {
               org.chainmaker.pb.common.Request.TxRequest txRequest =
                   org.chainmaker.pb.common.Request.TxRequest.parseFrom(
                       transactionParams.getSignData());
-              byte[] value = txRequest.getPayload().getParameters(0).getValue().toByteArray();
-              abi = Hex.toHexString(value);
+              abi = txRequest.getPayload().getParameters(0).getValue().toStringUtf8();
             } else {
               Map<String, byte[]> contractMethodParams =
                   transactionParams.getContractMethodParams();
               byte[] orgEncodeArgs =
                   contractMethodParams.get(ChainMakerConstant.CHAIN_MAKER_CONTRACT_ARGS_EVM_PARAM);
-              abi = Hex.toHexString(orgEncodeArgs);
+              abi = new String(orgEncodeArgs, StandardCharsets.UTF_8);
             }
-            byte[] encodedArgs =
-                abiCodec
-                    .encodeMethodFromString(
-                        contractAbi, method, args != null ? Arrays.asList(args) : new ArrayList<>())
-                    .getBytes();
-            encodeAbi = Hex.toHexString(encodedArgs);
+            encodeAbi =
+                abiCodec.encodeMethodFromString(
+                    contractAbi, method, args != null ? Arrays.asList(args) : new ArrayList<>());
             break;
           }
         default:
@@ -281,7 +275,7 @@ public class ChainMakerDriver implements Driver {
             try {
               ChainmakerBlock.BlockInfo blockInfo =
                   ChainmakerBlock.BlockInfo.parseFrom(response.getData());
-              Block block = BlockUtility.convertToBlock(response.getData(), onlyHeader);
+              Block block = BlockUtility.convertToBlock(blockInfo, onlyHeader);
               block.setRawBytes(response.getData());
               if (block.getTransactionsHashes().isEmpty()) {
                 List<ChainmakerTransaction.Transaction> txsList = blockInfo.getBlock().getTxsList();
@@ -695,11 +689,7 @@ public class ChainMakerDriver implements Driver {
                   () ->
                       new ChainMakerStubException(
                           ChainMakerStatusCode.MethodNotExist, "method not exist: " + method));
-
-      byte[] encodedArgs =
-          Hex.decode(
-              abiCodec.encodeMethodFromString(
-                  contractAbi, method, args != null ? Arrays.asList(args) : new ArrayList<>()));
+      byte[] encodedArgs = Numeric.hexStringToByteArray(encodeFunctionArgs(abiDefinition, args));
       String transactionID = (String) request.getOptions().get(StubConstant.XA_TRANSACTION_ID);
 
       Function function;
@@ -725,7 +715,7 @@ public class ChainMakerDriver implements Driver {
       Map<String, byte[]> params = new HashMap<>();
       params.put(
           ChainMakerConstant.CHAIN_MAKER_CONTRACT_ARGS_EVM_PARAM,
-          Hex.decode(functionEncoder.encode(function)));
+          functionEncoder.encode(function).getBytes(StandardCharsets.UTF_8));
 
       TransactionParams transaction =
           new TransactionParams(
@@ -847,7 +837,7 @@ public class ChainMakerDriver implements Driver {
           abiCodec
               .encodeMethodFromString(
                   contractAbi, method, args != null ? Arrays.asList(args) : new ArrayList<>())
-              .getBytes();
+              .getBytes(StandardCharsets.UTF_8);
 
       if (logger.isDebugEnabled()) {
         logger.debug(
@@ -979,11 +969,7 @@ public class ChainMakerDriver implements Driver {
                       new ChainMakerStubException(
                           ChainMakerStatusCode.MethodNotExist, "method not exist: " + method));
 
-      byte[] encodedArgs =
-          abiCodec
-              .encodeMethodFromString(
-                  contractAbi, method, args != null ? Arrays.asList(args) : new ArrayList<>())
-              .getBytes();
+      byte[] encodedArgs = Numeric.hexStringToByteArray(encodeFunctionArgs(abiDefinition, args));
 
       String uniqueID = (String) request.getOptions().get(StubConstant.TRANSACTION_UNIQUE_ID);
       String uid =
@@ -1026,7 +1012,7 @@ public class ChainMakerDriver implements Driver {
       Map<String, byte[]> params = new HashMap<>();
       params.put(
           ChainMakerConstant.CHAIN_MAKER_CONTRACT_ARGS_EVM_PARAM,
-          Hex.decode(functionEncoder.encode(function)));
+          functionEncoder.encode(function).getBytes(StandardCharsets.UTF_8));
 
       ChainClient nativeClient = chainMakerConnection.getClientWrapper().getNativeClient();
       org.chainmaker.pb.common.Request.Payload payload =
@@ -1154,9 +1140,10 @@ public class ChainMakerDriver implements Driver {
                           ChainMakerStatusCode.MethodNotExist, "method not exist: " + method));
 
       byte[] encodedArgs =
-          Hex.decode(
-              abiCodec.encodeMethodFromString(
-                  contractAbi, method, args != null ? Arrays.asList(args) : new ArrayList<>()));
+          abiCodec
+              .encodeMethodFromString(
+                  contractAbi, method, args != null ? Arrays.asList(args) : new ArrayList<>())
+              .getBytes(StandardCharsets.UTF_8);
 
       if (logger.isDebugEnabled()) {
         logger.debug(
@@ -1265,5 +1252,12 @@ public class ChainMakerDriver implements Driver {
           ChainMakerStatusCode.InvalidParameter,
           "Chain id not found, resource: " + ChainMakerConstant.CHAIN_MAKER_PROPERTY_CHAIN_ID);
     }
+  }
+
+  private String encodeFunctionArgs(ABIDefinition abiFunction, String[] args) throws IOException {
+    ABIObject inputObj = ABIObjectFactory.createInputObject(abiFunction);
+    ABIObject encodeObj =
+        codecJsonWrapper.encode(inputObj, args != null ? Arrays.asList(args) : new ArrayList<>());
+    return encodeObj.encode();
   }
 }
