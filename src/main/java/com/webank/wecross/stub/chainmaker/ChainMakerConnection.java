@@ -4,15 +4,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.protobuf.util.JsonFormat;
 import com.webank.wecross.stub.Connection;
-import com.webank.wecross.stub.ObjectMapperFactory;
 import com.webank.wecross.stub.Request;
 import com.webank.wecross.stub.ResourceInfo;
 import com.webank.wecross.stub.Response;
+import com.webank.wecross.stub.chainmaker.account.ChainMakerUserFactory;
 import com.webank.wecross.stub.chainmaker.client.AbstractClientWrapper;
 import com.webank.wecross.stub.chainmaker.common.ChainMakerConstant;
 import com.webank.wecross.stub.chainmaker.common.ChainMakerRequestType;
 import com.webank.wecross.stub.chainmaker.common.ChainMakerStatusCode;
 import com.webank.wecross.stub.chainmaker.common.ChainMakerStubException;
+import com.webank.wecross.stub.chainmaker.common.ObjectMapperFactory;
 import com.webank.wecross.stub.chainmaker.protocal.TransactionParams;
 import com.webank.wecross.stub.chainmaker.utils.FunctionUtility;
 import java.math.BigInteger;
@@ -29,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import org.chainmaker.pb.common.ChainmakerBlock;
 import org.chainmaker.pb.common.ChainmakerTransaction;
 import org.chainmaker.pb.common.ResultOuterClass;
+import org.chainmaker.sdk.User;
 import org.fisco.bcos.sdk.abi.FunctionEncoder;
 import org.fisco.bcos.sdk.abi.datatypes.Function;
 import org.fisco.bcos.sdk.crypto.CryptoSuite;
@@ -190,10 +192,13 @@ public class ChainMakerConnection implements Connection {
     try {
       TransactionParams cmRequest =
           objectMapper.readValue(request.getData(), TransactionParams.class);
-
-      org.chainmaker.pb.common.Request.TxRequest txRequest =
-          org.chainmaker.pb.common.Request.TxRequest.parseFrom(cmRequest.getSignData());
-      ResultOuterClass.TxResponse txResponse = clientWrapper.sendTxRequest(txRequest);
+      String contractAddress = cmRequest.getContractAddress();
+      String contractMethodId = cmRequest.getContractMethodId();
+      Map<String, byte[]> contractMethodParams = cmRequest.getContractMethodParams();
+      User user = ChainMakerUserFactory.buildUserFromPrivateKeyBytes(cmRequest.getSignKey());
+      ResultOuterClass.TxResponse txResponse =
+          clientWrapper.invokeContractWithUser(
+              contractAddress, contractMethodId, contractMethodParams, user);
       if (logger.isDebugEnabled()) {
         logger.debug("handleAsyncTransactionRequest: {}", JsonFormat.printer().print(txResponse));
       }

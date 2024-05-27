@@ -25,10 +25,8 @@ public class BlockUtility {
   public static BlockHeader convertToBlockHeader(ChainmakerBlock.Block chainmakerBlock) {
     ChainmakerBlock.BlockHeader chainMakerHeader = chainmakerBlock.getHeader();
     BlockHeader blockHeader = new BlockHeader();
-    // 获取区块hash
     String blockHash = Hex.toHexString(chainMakerHeader.getBlockHash().toByteArray());
     blockHeader.setHash(blockHash);
-    // 获取上一区块hash
     String prevHash =
         ObjectUtils.isEmpty(chainMakerHeader.getPreBlockHash().toByteArray())
             ? null
@@ -52,10 +50,8 @@ public class BlockUtility {
    */
   public static Block convertToBlock(ChainmakerBlock.Block chainmakerBlock, boolean onlyHeader) {
     Block stubBlock = new Block();
-    /** BlockHeader */
     BlockHeader blockHeader = convertToBlockHeader(chainmakerBlock);
     stubBlock.setBlockHeader(blockHeader);
-    /** tx list */
     List<String> txs = new ArrayList<>();
     if (!onlyHeader && chainmakerBlock.getTxsCount() > 0) {
       for (int i = 0; i < chainmakerBlock.getTxsList().size(); i++) {
@@ -67,10 +63,6 @@ public class BlockUtility {
     return stubBlock;
   }
 
-  /**
-   * @param blockInfo
-   * @return
-   */
   public static Block convertToBlock(ChainmakerBlock.BlockInfo blockInfo, boolean onlyHeader) {
     ChainmakerBlock.Block chainmakerBlock = blockInfo.getBlock();
     if (logger.isDebugEnabled()) {

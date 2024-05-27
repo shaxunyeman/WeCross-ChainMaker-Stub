@@ -5,6 +5,8 @@ import com.webank.wecross.stub.chainmaker.common.ChainMakerConstant;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
+import org.chainmaker.pb.config.ChainConfigOuterClass;
+import org.chainmaker.sdk.utils.CryptoUtils;
 import org.fisco.bcos.sdk.crypto.CryptoSuite;
 import org.fisco.bcos.sdk.model.CryptoType;
 import org.fisco.bcos.sdk.utils.Numeric;
@@ -193,6 +195,15 @@ public class ChainMakerStubConfig {
     private String address;
     private String abi;
 
+    public String getAddress() {
+      if (StringUtils.isNotBlank(address)) {
+        // cleanHexPrefix 0x
+        return Numeric.cleanHexPrefix(address);
+      }
+      // calculate address based on contract name
+      return CryptoUtils.nameToAddrStr(name, ChainConfigOuterClass.AddrType.ETHEREUM);
+    }
+
     public String getType() {
       return type;
     }
@@ -207,11 +218,6 @@ public class ChainMakerStubConfig {
 
     public void setName(String name) {
       this.name = name;
-    }
-
-    public String getAddress() {
-      // cleanHexPrefix 0x
-      return Numeric.cleanHexPrefix(address);
     }
 
     public void setAddress(String address) {

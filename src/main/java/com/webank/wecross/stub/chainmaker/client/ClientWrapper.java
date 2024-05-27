@@ -3,7 +3,6 @@ package com.webank.wecross.stub.chainmaker.client;
 import java.util.Map;
 import org.chainmaker.pb.common.ChainmakerBlock;
 import org.chainmaker.pb.common.ChainmakerTransaction;
-import org.chainmaker.pb.common.Request;
 import org.chainmaker.pb.common.ResultOuterClass;
 import org.chainmaker.sdk.ChainClient;
 import org.chainmaker.sdk.ChainClientException;
@@ -14,19 +13,17 @@ public interface ClientWrapper {
 
   ChainClient getNativeClient();
 
+  ResultOuterClass.TxResponse queryContract(
+      String contractAddress, String methodId, Map<String, byte[]> params)
+      throws ChainClientException, ChainMakerCryptoSuiteException;
+
   ResultOuterClass.TxResponse invokeContract(
       String contractAddress, String methodId, Map<String, byte[]> params)
       throws ChainClientException, ChainMakerCryptoSuiteException;
 
-  ResultOuterClass.TxResponse sendContractRequest(
+  ResultOuterClass.TxResponse invokeContractWithUser(
       String contractAddress, String methodId, Map<String, byte[]> params, User user)
       throws ChainMakerCryptoSuiteException, ChainClientException;
-
-  ResultOuterClass.TxResponse sendTxRequest(Request.TxRequest signedRequest) throws Exception;
-
-  ResultOuterClass.TxResponse queryContract(
-      String contractAddress, String methodId, Map<String, byte[]> params)
-      throws ChainClientException, ChainMakerCryptoSuiteException;
 
   ChainmakerBlock.BlockInfo getBlockByHeight(long blockHeight)
       throws ChainClientException, ChainMakerCryptoSuiteException;

@@ -1,7 +1,6 @@
 package com.webank.wecross.stub.chainmaker.protocal;
 
 import com.webank.wecross.stub.TransactionRequest;
-import java.util.Arrays;
 import java.util.Map;
 
 public class TransactionParams {
@@ -9,9 +8,13 @@ public class TransactionParams {
   private String contractAddress;
   private String contractMethodId;
   private Map<String, byte[]> contractMethodParams;
-  private byte[] signData;
   private SUB_TYPE subType;
+
+  // target contract abi
   private String abi;
+
+  // send transaction signature key
+  private byte[] signKey;
 
   public enum SUB_TYPE {
     SEND_TX_BY_PROXY,
@@ -32,12 +35,6 @@ public class TransactionParams {
     this.contractAddress = contractAddress;
     this.contractMethodId = contractMethodId;
     this.contractMethodParams = contractMethodParams;
-    this.subType = type;
-  }
-
-  public TransactionParams(TransactionRequest transactionRequest, byte[] signData, SUB_TYPE type) {
-    this.transactionRequest = transactionRequest;
-    this.signData = signData;
     this.subType = type;
   }
 
@@ -73,10 +70,6 @@ public class TransactionParams {
     this.contractMethodParams = contractMethodParams;
   }
 
-  public byte[] getSignData() {
-    return signData;
-  }
-
   public SUB_TYPE getSubType() {
     return subType;
   }
@@ -93,26 +86,30 @@ public class TransactionParams {
     this.abi = abi;
   }
 
+  public byte[] getSignKey() {
+    return signKey;
+  }
+
+  public void setSignKey(byte[] signKey) {
+    this.signKey = signKey;
+  }
+
   @Override
   public String toString() {
     return "TransactionParams{"
-        + "transactionRequest="
-        + transactionRequest
-        + ", contractAddress='"
-        + contractAddress
+        + "abi='"
+        + abi
         + '\''
+        + ", subType="
+        + subType
         + ", contractMethodId='"
         + contractMethodId
         + '\''
-        + ", contractMethodParams="
-        + contractMethodParams
-        + ", signData="
-        + Arrays.toString(signData)
-        + ", subType="
-        + subType
-        + ", abi='"
-        + abi
+        + ", contractAddress='"
+        + contractAddress
         + '\''
+        + ", transactionRequest="
+        + transactionRequest
         + '}';
   }
 }
