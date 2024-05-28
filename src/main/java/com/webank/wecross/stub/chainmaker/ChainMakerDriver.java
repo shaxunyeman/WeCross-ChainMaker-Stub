@@ -276,7 +276,7 @@ public class ChainMakerDriver implements Driver {
                   ChainmakerBlock.BlockInfo.parseFrom(response.getData());
               Block block = BlockUtility.convertToBlock(blockInfo, onlyHeader);
               block.setRawBytes(response.getData());
-              if (block.getTransactionsHashes().isEmpty()) {
+              if (!block.getTransactionsHashes().isEmpty()) {
                 List<ChainmakerTransaction.Transaction> txsList = blockInfo.getBlock().getTxsList();
                 for (ChainmakerTransaction.Transaction chainMakerTx : txsList) {
                   parseChainMakerTransaction(chainMakerTx, block, connection);
@@ -630,11 +630,19 @@ public class ChainMakerDriver implements Driver {
       throw new UnsupportedOperationException(
           "Not ChainMakerAccount, account name: " + account.getClass().getName());
     }
-    User user = ((ChainMakerPublicAccount) account).getUser();
+    ChainMakerPublicAccount chainMakerPublicAccount = (ChainMakerPublicAccount) account;
+    User user = chainMakerPublicAccount.getUser();
+    PrivateKey privateKey = null;
     try {
-      PrivateKey privateKey = CryptoUtils.getPrivateKeyFromBytes(user.getPriBytes());
+      privateKey = CryptoUtils.getPrivateKeyFromBytes(user.getPriBytes());
       // TODO: hashType
-      return user.getCryptoSuite().rsaSign(privateKey, message, "");
+      String hash = "ECDSA";
+      if (chainMakerPublicAccount
+          .getType()
+          .equals(ChainMakerConstant.CHAIN_MAKER_GM_EVM_STUB_TYPE)) {
+        hash = "SM3";
+      }
+      return user.getCryptoSuite().rsaSign(privateKey, message, hash);
     } catch (Exception e) {
       throw new UnsupportedOperationException(
           "get account user privateKey error,account name:" + account.getClass().getName());

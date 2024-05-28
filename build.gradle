@@ -134,8 +134,15 @@ sourceSets {
 
 shadowJar {
     dependsOn(copyHooks)
+    dependencies {
+        //排除掉io.netty:.*，不打包进fat jar
+        exclude(dependency('io.netty:.*'))
+    }
     mergeServiceFiles()
-    minimize()
+    minimize{
+        //不优化处理io.grpc:.*，直接打进fat jar
+        exclude(dependency('io.grpc:.*'))
+    }
 }
 
 

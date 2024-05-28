@@ -77,7 +77,6 @@ public class ChainMakerAccountFactory {
       ChainMakerPublicAccount account =
           new ChainMakerPublicAccount(
               username, type, ChainMakerUserFactory.buildUserFromPrivateKeyBytes(privateKeyBytes));
-
       if (!account.getIdentity().equals(address)) {
         throw new Exception("Given address is not belongs to the secKey of " + username);
       }
