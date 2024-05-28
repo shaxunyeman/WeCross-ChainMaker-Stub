@@ -1,0 +1,32 @@
+[common]
+    name = 'chainmaker' # stub must be same with directory name
+    type = 'CHAIN_MAKER' # CHAIN_MAKER or CHAIN_MAKER_GM
+[chain]
+    chainId = 'pkchain01'
+    signKeyPath = 'sign.key'
+    authType = 'public'         # public or permissionedWithcert
+    [chain.crypto]
+        hash = "SHA256" # SHA256 or SM3
+    [[chain.nodes]]
+        nodeAddr = "127.0.0.1:13001"
+    [[chain.nodes]]
+        nodeAddr = "127.0.0.1:13002"
+    [[chain.nodes]]
+        nodeAddr = "127.0.0.1:13003"
+    [[chain.nodes]]
+        nodeAddr = "127.0.0.1:13004"
+    [chain.rpcClient]
+        callTimeout = 10000
+        syncResultTimeout = 10000
+        maxReceiveMessageSize = 100
+
+[[resources]]
+    type = 'CM_CONTRACT'
+    name = 'WeCrossProxy'
+    address = '16d09a2580c2ac8ed649c1df35b93061de1fa130'
+    abi = ''
+[[resources]]
+    type = 'CM_CONTRACT'
+    name = 'WeCrossHub'
+    address = '3928313d50222ae2ec908a99a83d5b6a56e56a7c'
+    abi = ''
