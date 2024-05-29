@@ -2,10 +2,7 @@ package com.webank.wecross.stub.chainmaker.client;
 
 import com.webank.wecross.stub.chainmaker.config.ChainMakerStubConfig;
 import java.util.Map;
-import org.chainmaker.pb.common.ChainmakerBlock;
-import org.chainmaker.pb.common.ChainmakerTransaction;
-import org.chainmaker.pb.common.Request;
-import org.chainmaker.pb.common.ResultOuterClass;
+import org.chainmaker.pb.common.*;
 import org.chainmaker.sdk.ChainClient;
 import org.chainmaker.sdk.ChainClientException;
 import org.chainmaker.sdk.User;
@@ -90,5 +87,35 @@ public abstract class AbstractClientWrapper implements ClientWrapper {
   public byte[] getMerklePathByTxId(String txId)
       throws ChainClientException, ChainMakerCryptoSuiteException {
     return client.getMerklePathByTxId(txId, rpcCallTimeout);
+  }
+
+  @Override
+  public Request.Payload createContractCreatePayload(
+      String contractName,
+      String version,
+      byte[] byteCode,
+      ContractOuterClass.RuntimeType runtime,
+      Map<String, byte[]> params)
+      throws ChainMakerCryptoSuiteException {
+    return client.createContractCreatePayload(contractName, version, byteCode, runtime, params);
+  }
+
+  @Override
+  public Request.Payload createContractUpgradePayload(
+      String contractName,
+      String version,
+      byte[] byteCode,
+      ContractOuterClass.RuntimeType runtime,
+      Map<String, byte[]> params)
+      throws ChainMakerCryptoSuiteException {
+    return client.createContractUpgradePayload(contractName, version, byteCode, runtime, params);
+  }
+
+  @Override
+  public ResultOuterClass.TxResponse sendContractManageRequest(
+      Request.Payload payload, Request.EndorsementEntry[] endorsementEntries)
+      throws ChainMakerCryptoSuiteException, ChainClientException {
+    return client.sendContractManageRequest(
+        payload, endorsementEntries, rpcCallTimeout, syncResultTimeout);
   }
 }
