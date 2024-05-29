@@ -15,6 +15,7 @@ import com.webank.wecross.stub.TransactionContext;
 import com.webank.wecross.stub.TransactionException;
 import com.webank.wecross.stub.TransactionRequest;
 import com.webank.wecross.stub.TransactionResponse;
+import com.webank.wecross.stub.chainmaker.account.ChainMakerAccount;
 import com.webank.wecross.stub.chainmaker.account.ChainMakerPublicAccount;
 import com.webank.wecross.stub.chainmaker.common.ChainMakerConstant;
 import com.webank.wecross.stub.chainmaker.common.ChainMakerRequestType;
@@ -43,6 +44,7 @@ import org.chainmaker.pb.common.ChainmakerBlock;
 import org.chainmaker.pb.common.ChainmakerTransaction;
 import org.chainmaker.pb.common.ResultOuterClass;
 import org.chainmaker.sdk.User;
+import org.chainmaker.sdk.config.AuthType;
 import org.chainmaker.sdk.utils.CryptoUtils;
 import org.fisco.bcos.sdk.abi.ABICodec;
 import org.fisco.bcos.sdk.abi.FunctionEncoder;
@@ -626,23 +628,33 @@ public class ChainMakerDriver implements Driver {
 
   @Override
   public byte[] accountSign(Account account, byte[] message) {
-    if (!(account instanceof ChainMakerPublicAccount)) {
+    if (!(account instanceof ChainMakerAccount)) {
       throw new UnsupportedOperationException(
           "Not ChainMakerAccount, account name: " + account.getClass().getName());
     }
-    ChainMakerPublicAccount chainMakerPublicAccount = (ChainMakerPublicAccount) account;
-    User user = chainMakerPublicAccount.getUser();
+    ChainMakerAccount chainMakerAccount = (ChainMakerAccount) account;
+    User user = chainMakerAccount.getUser();
     PrivateKey privateKey = null;
     try {
-      privateKey = CryptoUtils.getPrivateKeyFromBytes(user.getPriBytes());
-      // TODO: hashType
-      String hash = "ECDSA";
-      if (chainMakerPublicAccount
-          .getType()
-          .equals(ChainMakerConstant.CHAIN_MAKER_GM_EVM_STUB_TYPE)) {
-        hash = "SM3";
+      byte[] signature = null;
+      if (user.getAuthType().equals(AuthType.PermissionedWithCert.getMsg())) {
+        if (user.getKeyId() == null || user.getKeyId().equals("")) {
+          signature = user.getCryptoSuite().sign(user.getPrivateKey(), message);
+        } else {
+          signature =
+              user.getCryptoSuite()
+                  .signWithHsm(Integer.parseInt(user.getKeyId()), user.getKeyType(), message);
+        }
+      } else {
+        privateKey = CryptoUtils.getPrivateKeyFromBytes(user.getPriBytes());
+        // TODO: hashType
+        String hash = "ECDSA";
+        if (chainMakerAccount.getType().equals(ChainMakerConstant.CHAIN_MAKER_GM_EVM_STUB_TYPE)) {
+          hash = "SM3";
+        }
+        signature = user.getCryptoSuite().rsaSign(privateKey, message, hash);
       }
-      return user.getCryptoSuite().rsaSign(privateKey, message, hash);
+      return signature;
     } catch (Exception e) {
       throw new UnsupportedOperationException(
           "get account user privateKey error,account name:" + account.getClass().getName());

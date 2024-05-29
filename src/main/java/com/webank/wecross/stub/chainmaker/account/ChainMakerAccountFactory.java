@@ -1,11 +1,15 @@
 package com.webank.wecross.stub.chainmaker.account;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Files;
+import com.webank.wecross.stub.chainmaker.common.ChainMakerConstant;
 import com.webank.wecross.stub.chainmaker.config.ChainMakerAccountConfig;
 import com.webank.wecross.stub.chainmaker.config.ChainMakerAccountConfigParser;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import org.chainmaker.sdk.config.AuthType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -26,14 +30,15 @@ public class ChainMakerAccountFactory {
     return new ChainMakerAccountFactory(stubType);
   }
 
-  public ChainMakerPublicAccount build(Map<String, Object> properties) {
+  public ChainMakerAccount build(Map<String, Object> properties) {
+    String authType = (String) properties.get(ChainMakerConstant.CHAIN_MAKER_PROPERTY_AUTH_TYPE);
     String username = (String) properties.get("username");
     Integer keyID = (Integer) properties.get("keyID");
     String type = (String) properties.get("type");
     Boolean isDefault = (Boolean) properties.get("isDefault");
     String secKey = (String) properties.get("secKey");
     String pubKey = (String) properties.get("pubKey");
-    String address = (String) properties.get("ext0");
+    String ext0 = (String) properties.get("ext0");
 
     if (username == null || username.isEmpty()) {
       logger.error("username has not given");
@@ -65,22 +70,40 @@ public class ChainMakerAccountFactory {
       return null;
     }
 
-    if (address == null || address.isEmpty()) {
-      logger.error("address has not given in ext0");
+    if (ext0 == null || ext0.isEmpty()) {
+      logger.error("ext0 has not given");
       return null;
     }
 
+    ChainMakerAccount account = null;
     try {
       logger.info("New account: {} type:{}", username, type);
-
-      byte[] privateKeyBytes = secKey.getBytes(StandardCharsets.UTF_8);
-      ChainMakerPublicAccount account =
-          new ChainMakerPublicAccount(
-              username, type, ChainMakerUserFactory.buildUserFromPrivateKeyBytes(privateKeyBytes));
-      if (!account.getIdentity().equals(address)) {
-        throw new Exception("Given address is not belongs to the secKey of " + username);
+      if (authType.equals(AuthType.PermissionedWithCert.getMsg())) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        Map<String, String> ext0Map =
+            objectMapper.readValue(ext0, new TypeReference<Map<String, String>>() {});
+        account =
+            new ChainMakerWithCertAccount(
+                username,
+                type,
+                ChainMakerUserFactory.buildUserFromPrivateKeyBytes(
+                    ext0Map.get("userSignKey").getBytes(),
+                    ext0Map.get("userSignCert").getBytes(),
+                    secKey.getBytes(),
+                    pubKey.getBytes(),
+                    ext0Map.get("pkcs11Enable").equalsIgnoreCase("true") ? true : false));
+        account.getUser().setOrgId(ext0Map.get("orgId"));
+      } else {
+        byte[] privateKeyBytes = secKey.getBytes(StandardCharsets.UTF_8);
+        account =
+            new ChainMakerPublicAccount(
+                username,
+                type,
+                ChainMakerUserFactory.buildUserFromPrivateKeyBytes(privateKeyBytes));
+        if (!account.getIdentity().equals(ext0)) {
+          throw new Exception("Given address is not belongs to the secKey of " + username);
+        }
       }
-
       return account;
     } catch (Exception e) {
       logger.error("ChainMakerPublicAccount exception: {}", e.getMessage());

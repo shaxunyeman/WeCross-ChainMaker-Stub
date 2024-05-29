@@ -28,4 +28,22 @@ public class ChainMakerUserFactory {
     user.setPukBytes(publicKeyBytes);
     return user;
   }
+
+  public static User buildUserFromPrivateKeyBytes(
+      byte[] userSignKeyBytes,
+      byte[] userSignCertBytes,
+      byte[] tlsUserKeyBytes,
+      byte[] tlsUserCertBytes,
+      boolean pkcs11Enable)
+      throws Exception {
+    User user =
+        new User(
+            "",
+            userSignKeyBytes,
+            userSignCertBytes,
+            tlsUserKeyBytes,
+            tlsUserCertBytes,
+            pkcs11Enable);
+    return user;
+  }
 }

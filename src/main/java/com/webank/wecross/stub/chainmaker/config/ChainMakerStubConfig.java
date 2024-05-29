@@ -58,7 +58,11 @@ public class ChainMakerStubConfig {
 
   public static class Chain {
     private String chainId;
+    private String orgId;
     private String signKeyPath;
+    private String signCertPath;
+    private String tlsKeyPath;
+    private String tlsCertPath;
     private String authType;
     private Crypto crypto;
     private List<Node> nodes;
@@ -83,6 +87,9 @@ public class ChainMakerStubConfig {
 
     public static class Node {
       private String nodeAddr;
+      private Boolean enableTls = false;
+      private String tlsHostName = null;
+      private List<String> trustRootPaths = new ArrayList<>();
 
       public String getNodeAddr() {
         return nodeAddr;
@@ -90,6 +97,30 @@ public class ChainMakerStubConfig {
 
       public void setNodeAddr(String nodeAddr) {
         this.nodeAddr = nodeAddr;
+      }
+
+      public Boolean getEnableTls() {
+        return enableTls;
+      }
+
+      public void setEnableTls(Boolean enableTls) {
+        this.enableTls = enableTls;
+      }
+
+      public String getTlsHostName() {
+        return tlsHostName;
+      }
+
+      public void setTlsHostName(String tlsHostName) {
+        this.tlsHostName = tlsHostName;
+      }
+
+      public List<String> getTrustRootPaths() {
+        return trustRootPaths;
+      }
+
+      public void setTrustRootPaths(List<String> trustRootPaths) {
+        this.trustRootPaths = trustRootPaths;
       }
 
       @Override
@@ -148,12 +179,44 @@ public class ChainMakerStubConfig {
       this.chainId = chainId;
     }
 
+    public String getOrgId() {
+      return orgId;
+    }
+
+    public void setOrgId(String orgId) {
+      this.orgId = orgId;
+    }
+
     public String getSignKeyPath() {
       return signKeyPath;
     }
 
     public void setSignKeyPath(String signKeyPath) {
       this.signKeyPath = signKeyPath;
+    }
+
+    public String getSignCertPath() {
+      return signCertPath;
+    }
+
+    public void setSignCertPath(String signCertPath) {
+      this.signCertPath = signCertPath;
+    }
+
+    public String getTlsKeyPath() {
+      return tlsKeyPath;
+    }
+
+    public void setTlsKeyPath(String tlsKeyPath) {
+      this.tlsKeyPath = tlsKeyPath;
+    }
+
+    public String getTlsCertPath() {
+      return tlsCertPath;
+    }
+
+    public void setTlsCertPath(String tlsCertPath) {
+      this.tlsCertPath = tlsCertPath;
     }
 
     public String getAuthType() {

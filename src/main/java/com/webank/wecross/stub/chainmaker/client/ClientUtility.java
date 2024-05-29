@@ -6,11 +6,7 @@ import java.io.IOException;
 import java.util.List;
 import org.chainmaker.sdk.ChainClient;
 import org.chainmaker.sdk.ChainManager;
-import org.chainmaker.sdk.config.ChainClientConfig;
-import org.chainmaker.sdk.config.CryptoConfig;
-import org.chainmaker.sdk.config.NodeConfig;
-import org.chainmaker.sdk.config.RpcClientConfig;
-import org.chainmaker.sdk.config.SdkConfig;
+import org.chainmaker.sdk.config.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -36,7 +32,11 @@ public class ClientUtility {
   private static ChainClientConfig buildChainClientConfig(ChainMakerStubConfig.Chain chain)
       throws WeCrossException, IOException {
     String chainId = chain.getChainId();
+    String orgId = chain.getOrgId();
     String signKeyPath = chain.getSignKeyPath();
+    String signCertPath = chain.getSignCertPath();
+    String tlsKeyPath = chain.getTlsKeyPath();
+    String tlsCertPath = chain.getTlsCertPath();
     String authType = chain.getAuthType();
     String hash = chain.getCrypto().getHash();
     List<ChainMakerStubConfig.Chain.Node> nodes = chain.getNodes();
@@ -51,6 +51,9 @@ public class ClientUtility {
                 s -> {
                   NodeConfig nodeConfig = new NodeConfig();
                   nodeConfig.setNodeAddr(s.getNodeAddr());
+                  nodeConfig.setEnable_tls(s.getEnableTls());
+                  nodeConfig.setTls_host_name(s.getTlsHostName());
+                  nodeConfig.setTrust_root_paths(s.getTrustRootPaths().toArray(new String[0]));
                   return nodeConfig;
                 })
             .toArray(NodeConfig[]::new);
@@ -58,17 +61,60 @@ public class ClientUtility {
     RpcClientConfig rpcClientConfig = new RpcClientConfig();
     rpcClientConfig.setMaxReceiveMessageSize(maxReceiveMessageSize);
 
+    ChainClientConfig chainClientConfig = new ChainClientConfig();
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-    Resource signKeyResource = resolver.getResource(signKeyPath);
-    if (!signKeyResource.exists() || !signKeyResource.isFile()) {
-      throw new WeCrossException(
-          WeCrossException.ErrorCode.DIR_NOT_EXISTS,
-          signKeyPath + " does not exist, please check.");
+
+    if (authType.equals(AuthType.PermissionedWithCert.getMsg())) {
+      Resource signKeyResource = resolver.getResource(signKeyPath);
+      if (!signKeyResource.exists() || !signKeyResource.isFile()) {
+        throw new WeCrossException(
+            WeCrossException.ErrorCode.DIR_NOT_EXISTS,
+            signKeyPath + " does not exist, please check.");
+      }
+
+      Resource signCertResource = resolver.getResource(signCertPath);
+      if (!signKeyResource.exists() || !signKeyResource.isFile()) {
+        throw new WeCrossException(
+            WeCrossException.ErrorCode.DIR_NOT_EXISTS,
+            signCertPath + " does not exist, please check.");
+      }
+
+      Resource tlsKeyResource = resolver.getResource(tlsKeyPath);
+      if (!signKeyResource.exists() || !signKeyResource.isFile()) {
+        throw new WeCrossException(
+            WeCrossException.ErrorCode.DIR_NOT_EXISTS,
+            tlsKeyPath + " does not exist, please check.");
+      }
+
+      Resource tlsCertResource = resolver.getResource(tlsCertPath);
+      if (!signKeyResource.exists() || !signKeyResource.isFile()) {
+        throw new WeCrossException(
+            WeCrossException.ErrorCode.DIR_NOT_EXISTS,
+            tlsCertPath + " does not exist, please check.");
+      }
+
+      if (orgId == null || orgId.isEmpty()) {
+        throw new WeCrossException(
+            WeCrossException.ErrorCode.FIELD_MISSING, "orgId does not exist, please check.");
+      }
+
+      chainClientConfig.setUserSignKeyFilePath(signKeyResource.getFile().getPath());
+      chainClientConfig.setUserSignCrtFilePath(signCertResource.getFile().getPath());
+      chainClientConfig.setUserKeyFilePath(tlsKeyResource.getFile().getPath());
+      chainClientConfig.setUserCrtFilePath(tlsCertResource.getFile().getPath());
+      chainClientConfig.setOrgId(orgId);
+
+    } else {
+      Resource signKeyResource = resolver.getResource(signKeyPath);
+      if (!signKeyResource.exists() || !signKeyResource.isFile()) {
+        throw new WeCrossException(
+            WeCrossException.ErrorCode.DIR_NOT_EXISTS,
+            signKeyPath + " does not exist, please check.");
+      }
+      chainClientConfig.setUserSignKeyFilePath(signKeyResource.getFile().getPath());
     }
 
-    ChainClientConfig chainClientConfig = new ChainClientConfig();
     chainClientConfig.setChainId(chainId);
-    chainClientConfig.setUserSignKeyFilePath(signKeyResource.getFile().getPath());
     chainClientConfig.setAuthType(authType);
     chainClientConfig.setCrypto(cryptoConfig);
     chainClientConfig.setNodes(nodeConfigs);
