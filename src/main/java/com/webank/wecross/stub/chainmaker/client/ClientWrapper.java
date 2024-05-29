@@ -1,9 +1,7 @@
 package com.webank.wecross.stub.chainmaker.client;
 
 import java.util.Map;
-import org.chainmaker.pb.common.ChainmakerBlock;
-import org.chainmaker.pb.common.ChainmakerTransaction;
-import org.chainmaker.pb.common.ResultOuterClass;
+import org.chainmaker.pb.common.*;
 import org.chainmaker.sdk.ChainClient;
 import org.chainmaker.sdk.ChainClientException;
 import org.chainmaker.sdk.User;
@@ -38,4 +36,24 @@ public interface ClientWrapper {
 
   byte[] getMerklePathByTxId(String txId)
       throws ChainClientException, ChainMakerCryptoSuiteException;
+
+  Request.Payload createContractCreatePayload(
+      String contractName,
+      String version,
+      byte[] byteCode,
+      ContractOuterClass.RuntimeType runtime,
+      Map<String, byte[]> params)
+      throws ChainMakerCryptoSuiteException;
+
+  Request.Payload createContractUpgradePayload(
+      String contractName,
+      String version,
+      byte[] byteCode,
+      ContractOuterClass.RuntimeType runtime,
+      Map<String, byte[]> params)
+      throws ChainMakerCryptoSuiteException;
+
+  ResultOuterClass.TxResponse sendContractManageRequest(
+      Request.Payload payload, Request.EndorsementEntry[] endorsementEntries)
+      throws ChainMakerCryptoSuiteException, ChainClientException;
 }
