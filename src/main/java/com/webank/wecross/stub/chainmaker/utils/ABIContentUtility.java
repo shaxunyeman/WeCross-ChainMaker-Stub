@@ -42,7 +42,7 @@ public class ABIContentUtility {
   public static String readContractABI(String rootPath, String contractName) throws Exception {
     File abiFilePath =
         new File(
-            EVMContractPath(rootPath, contractName).getName()
+            EVMContractPath(rootPath, contractName).getPath()
                 + File.separator
                 + contractName
                 + ".abi");

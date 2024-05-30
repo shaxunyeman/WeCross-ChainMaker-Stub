@@ -799,7 +799,13 @@ public class ChainMakerDriver implements Driver {
       String contractAbi = chainMakerConnection.getAbi(name);
       String contractAddress = chainMakerConnection.getProperty(name);
 
-      if (contractAbi == null) {
+      if (contractAbi == null || contractAbi.isEmpty()) {
+        contractAbi =
+            ABIContentUtility.readContractABI(
+                chainMakerConnection.getProperty(ChainMakerConstant.CHAIN_MAKER_ROOT_PATH), name);
+      }
+
+      if (contractAbi == null || contractAbi.isEmpty()) {
         throw new ChainMakerStubException(
             ChainMakerStatusCode.ABINotExist, "resource ABI not exist: " + name);
       }
@@ -942,7 +948,13 @@ public class ChainMakerDriver implements Driver {
       String contractAbi = chainMakerConnection.getAbi(name);
       String contractAddress = chainMakerConnection.getProperty(name);
 
-      if (contractAbi == null) {
+      if (contractAbi == null || contractAbi.isEmpty()) {
+        contractAbi =
+            ABIContentUtility.readContractABI(
+                chainMakerConnection.getProperty(ChainMakerConstant.CHAIN_MAKER_ROOT_PATH), name);
+      }
+
+      if (contractAbi == null || contractAbi.isEmpty()) {
         throw new ChainMakerStubException(
             ChainMakerStatusCode.ABINotExist, "resource ABI not exist: " + name);
       }
@@ -1075,13 +1087,16 @@ public class ChainMakerDriver implements Driver {
       String contractAbi = chainMakerConnection.getAbi(name);
       String contractAddress = chainMakerConnection.getProperty(name);
 
-      if (contractAbi == null) {
+      if (contractAbi == null || contractAbi.isEmpty()) {
+        contractAbi =
+            ABIContentUtility.readContractABI(
+                chainMakerConnection.getProperty(ChainMakerConstant.CHAIN_MAKER_ROOT_PATH), name);
+      }
+
+      if (contractAbi == null || contractAbi.isEmpty()) {
         throw new ChainMakerStubException(
             ChainMakerStatusCode.ABINotExist, "resource:" + name + " not exist");
       }
-
-      ChainMakerPublicAccount account = (ChainMakerPublicAccount) context.getAccount();
-      User user = account.getUser();
 
       // encode
       String[] args = request.getArgs();
@@ -1151,7 +1166,6 @@ public class ChainMakerDriver implements Driver {
               params,
               TransactionParams.SUB_TYPE.SEND_TX_BY_PROXY);
       transactionParams.setAbi(contractAbi);
-      transactionParams.setSignKey(user.getPriBytes());
       Request req =
           Request.newRequest(
               ChainMakerRequestType.SEND_TRANSACTION,
@@ -1240,7 +1254,13 @@ public class ChainMakerDriver implements Driver {
       String contractAbi = chainMakerConnection.getAbi(name);
       String contractAddress = chainMakerConnection.getProperty(name);
 
-      if (contractAbi == null) {
+      if (contractAbi == null || contractAbi.isEmpty()) {
+        contractAbi =
+            ABIContentUtility.readContractABI(
+                chainMakerConnection.getProperty(ChainMakerConstant.CHAIN_MAKER_ROOT_PATH), name);
+      }
+
+      if (contractAbi == null || contractAbi.isEmpty()) {
         throw new ChainMakerStubException(
             ChainMakerStatusCode.ABINotExist, "resource ABI not exist: " + name);
       }
