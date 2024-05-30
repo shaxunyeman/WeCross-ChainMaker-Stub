@@ -7,6 +7,8 @@ import com.webank.wecross.stub.Connection;
 import com.webank.wecross.stub.Request;
 import com.webank.wecross.stub.ResourceInfo;
 import com.webank.wecross.stub.Response;
+import com.webank.wecross.stub.chainmaker.account.ChainMakerAccount;
+import com.webank.wecross.stub.chainmaker.account.ChainMakerAccountFactory;
 import com.webank.wecross.stub.chainmaker.account.ChainMakerUserFactory;
 import com.webank.wecross.stub.chainmaker.client.AbstractClientWrapper;
 import com.webank.wecross.stub.chainmaker.common.ChainMakerConstant;
@@ -16,6 +18,7 @@ import com.webank.wecross.stub.chainmaker.common.ChainMakerStubException;
 import com.webank.wecross.stub.chainmaker.common.ObjectMapperFactory;
 import com.webank.wecross.stub.chainmaker.protocal.TransactionParams;
 import com.webank.wecross.stub.chainmaker.utils.FunctionUtility;
+import java.io.File;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -27,10 +30,12 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import org.chainmaker.pb.common.ChainmakerBlock;
 import org.chainmaker.pb.common.ChainmakerTransaction;
 import org.chainmaker.pb.common.ResultOuterClass;
 import org.chainmaker.sdk.User;
+import org.chainmaker.sdk.utils.SdkUtils;
 import org.fisco.bcos.sdk.abi.FunctionEncoder;
 import org.fisco.bcos.sdk.abi.datatypes.Function;
 import org.fisco.bcos.sdk.crypto.CryptoSuite;
@@ -86,6 +91,9 @@ public class ChainMakerConnection implements Connection {
       handleAsyncGetTransactionProof(request, callback);
     } else if (type == ChainMakerRequestType.GET_TRANSACTION) {
       handleAsyncGetTransaction(request, callback);
+    } else if (type == ChainMakerRequestType.CREATE_CUSTOMER_CONTRACT
+        || type == ChainMakerRequestType.UPGRADE_CUSTOMER_CONTRACT) {
+      handleAsyncDeployContract(request, callback);
     } else {
       logger.warn(" unrecognized request type, type: {}", request.getType());
       Response response = new Response();
@@ -112,6 +120,48 @@ public class ChainMakerConnection implements Connection {
     } catch (Exception e) {
       logger.warn("handleAsyncGetTransaction Exception, e: ", e);
       response.setErrorCode(ChainMakerStatusCode.UnclassifiedError);
+      response.setErrorMessage(e.getMessage());
+    } finally {
+      callback.onResponse(response);
+    }
+  }
+
+  private void handleAsyncDeployContract(Request request, Callback callback) {
+    Response response = new Response();
+    try {
+      org.chainmaker.pb.common.Request.Payload payload =
+          org.chainmaker.pb.common.Request.Payload.parseFrom(request.getData());
+
+      ChainMakerAccountFactory chainMakerAccountFactory =
+          ChainMakerAccountFactory.getInstance(
+              getProperty(ChainMakerConstant.CHAIN_MAKER_PROPERTY_STUB_TYPE));
+      List<ChainMakerAccount> accounts =
+          chainMakerAccountFactory.build(
+              getProperty(ChainMakerConstant.CHAIN_MAKER_PROPERTY_AUTH_TYPE),
+              getProperty(ChainMakerConstant.CHAIN_MAKER_ROOT_PATH) + File.separator + "accounts");
+
+      org.chainmaker.pb.common.Request.EndorsementEntry[] entries =
+          SdkUtils.getEndorsers(
+              payload,
+              accounts.stream()
+                  .map(ChainMakerAccount::getUser)
+                  .collect(Collectors.toList())
+                  .stream()
+                  .toArray(User[]::new),
+              getClientWrapper().getNativeClient().getHash());
+
+      ResultOuterClass.TxResponse chainMakerResponse =
+          getClientWrapper().sendContractManageRequest(payload, entries);
+      if (chainMakerResponse.getCode() == ResultOuterClass.TxStatusCode.SUCCESS) {
+        response.setErrorCode(ChainMakerStatusCode.Success);
+        response.setData(chainMakerResponse.toByteArray());
+      } else {
+        response.setErrorCode(ChainMakerStatusCode.HandleDeployContractFailed);
+        response.setErrorMessage(chainMakerResponse.getContractResult().getMessage());
+      }
+    } catch (Exception e) {
+      logger.warn("handleAsyncGetTransaction Exception, e: ", e);
+      response.setErrorCode(ChainMakerStatusCode.HandleDeployContractFailed);
       response.setErrorMessage(e.getMessage());
     } finally {
       callback.onResponse(response);

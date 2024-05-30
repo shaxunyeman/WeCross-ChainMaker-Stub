@@ -46,6 +46,7 @@ public class ChainMakerBaseStubFactory implements StubFactory {
     try {
       ChainMakerConnection connection =
           ChainMakerConnectionFactory.build(path, ChainMakerConstant.STUB_TOML_NAME);
+      connection.getProperties().put(ChainMakerConstant.CHAIN_MAKER_ROOT_PATH, path);
 
       // check proxy contract
       if (!connection.hasProxyDeployed()) {

@@ -22,8 +22,10 @@ import com.webank.wecross.stub.chainmaker.common.ChainMakerRequestType;
 import com.webank.wecross.stub.chainmaker.common.ChainMakerStatusCode;
 import com.webank.wecross.stub.chainmaker.common.ChainMakerStubException;
 import com.webank.wecross.stub.chainmaker.common.ObjectMapperFactory;
+import com.webank.wecross.stub.chainmaker.protocal.ContractResult;
 import com.webank.wecross.stub.chainmaker.protocal.TransactionParams;
 import com.webank.wecross.stub.chainmaker.protocal.TransactionProof;
+import com.webank.wecross.stub.chainmaker.utils.ABIContentUtility;
 import com.webank.wecross.stub.chainmaker.utils.BlockUtility;
 import com.webank.wecross.stub.chainmaker.utils.FunctionUtility;
 import com.webank.wecross.stub.chainmaker.utils.RevertMessage;
@@ -42,6 +44,7 @@ import java.util.UUID;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.chainmaker.pb.common.ChainmakerBlock;
 import org.chainmaker.pb.common.ChainmakerTransaction;
+import org.chainmaker.pb.common.ContractOuterClass;
 import org.chainmaker.pb.common.ResultOuterClass;
 import org.chainmaker.sdk.User;
 import org.chainmaker.sdk.config.AuthType;
@@ -616,6 +619,109 @@ public class ChainMakerDriver implements Driver {
         });
   }
 
+  private void deployCustomerContract(
+      boolean deploy,
+      Path path,
+      Object[] args,
+      Connection connection,
+      CustomCommandCallback callback) {
+    ChainMakerConnection chainMakerConnection = (ChainMakerConnection) connection;
+    String compliedCode = ((String) args[1]);
+    String abiContent = (String) args[2];
+    String contractName = (String) args[3];
+    String version = (String) args[4];
+    org.chainmaker.pb.common.Request.Payload payload = null;
+    try {
+      String[] params = null;
+      ContractABIDefinition contractABIDefinition = this.abiDefinitionFactory.loadABI(abiContent);
+      ABIDefinition abiDefinition = contractABIDefinition.getConstructor();
+      List<ABIDefinition.NamedType> inputs = abiDefinition.getInputs();
+      // handle constructor params
+      for (int i = 5; i < 5 + inputs.size(); i++) {
+        if (params == null) {
+          params = new String[inputs.size()];
+        }
+        params[i - 5] = (String) args[i];
+      }
+      if (params != null) {
+        ABIObject abiObject =
+            this.codecJsonWrapper.encode(
+                ABIObjectFactory.createInputObject(abiDefinition), Arrays.asList(params));
+        compliedCode += abiObject.encode();
+      }
+
+      if (deploy) {
+        payload =
+            chainMakerConnection
+                .getClientWrapper()
+                .createContractCreatePayload(
+                    contractName,
+                    version,
+                    compliedCode.getBytes(),
+                    ContractOuterClass.RuntimeType.EVM,
+                    null);
+      } else {
+        payload =
+            chainMakerConnection
+                .getClientWrapper()
+                .createContractUpgradePayload(
+                    contractName,
+                    version,
+                    compliedCode.getBytes(),
+                    ContractOuterClass.RuntimeType.EVM,
+                    null);
+      }
+      Request weCressRequest =
+          Request.newRequest(
+              deploy
+                  ? ChainMakerRequestType.CREATE_CUSTOMER_CONTRACT
+                  : ChainMakerRequestType.UPGRADE_CUSTOMER_CONTRACT,
+              payload.toByteArray());
+      chainMakerConnection.asyncSend(
+          weCressRequest,
+          response -> {
+            if (response.getErrorCode() != ChainMakerStatusCode.Success) {
+              callback.onResponse(
+                  new Exception(
+                      String.format(
+                          "deploy a contract names %s failed. reason: %s",
+                          contractName, response.getErrorMessage())),
+                  null);
+            } else {
+              try {
+                // save abi content
+                String rootPath =
+                    chainMakerConnection.getProperty(ChainMakerConstant.CHAIN_MAKER_ROOT_PATH);
+                ABIContentUtility.writeContractABI(rootPath, contractName, abiContent);
+
+                ResultOuterClass.TxResponse txResponse =
+                    ResultOuterClass.TxResponse.parseFrom(response.getData());
+                ContractResult contractResult = new ContractResult();
+                contractResult.setContractName(contractName);
+                contractResult.setContractAddress(contractName);
+                contractResult.setTxId(txResponse.getTxId());
+                callback.onResponse(
+                    null, new String(objectMapper.writeValueAsBytes(contractResult)));
+              } catch (Exception e) {
+                callback.onResponse(
+                    new Exception(
+                        String.format(
+                            "Handling a contract(%s) result failed. reason: %s",
+                            contractName, e.getMessage())),
+                    null);
+              }
+            }
+          });
+    } catch (Exception e) {
+      logger.warn("deploy contract {} was failure. e: {}", contractName, e.getMessage());
+      callback.onResponse(
+          new Exception(
+              String.format(
+                  "deploy/upgrade contract %s failed. reason: %s", contractName, e.getMessage())),
+          null);
+    }
+  }
+
   @Override
   public void asyncCustomCommand(
       String command,
@@ -624,7 +730,13 @@ public class ChainMakerDriver implements Driver {
       Account account,
       BlockManager blockManager,
       Connection connection,
-      CustomCommandCallback callback) {}
+      CustomCommandCallback callback) {
+    if (command.equals(ChainMakerConstant.CHAIN_MAKER_CONTRACT_DEPLOY)) {
+      deployCustomerContract(true, path, args, connection, callback);
+    } else if (command.equals(ChainMakerConstant.CHAIN_MAKER_CONTRACT_UPGRADE)) {
+      deployCustomerContract(false, path, args, connection, callback);
+    }
+  }
 
   @Override
   public byte[] accountSign(Account account, byte[] message) {

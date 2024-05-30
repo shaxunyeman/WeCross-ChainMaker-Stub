@@ -22,6 +22,7 @@ public class ChainMakerStatusCode {
   public static final int HandleGetBlockFailed = 2024;
   public static final int HandleGetTransactionProofFailed = 2025;
   public static final int RegisterContractFailed = 2027;
+  public static final int HandleDeployContractFailed = 2028;
 
   public static final int CallNotSuccessStatus = 2030;
   public static final int SendTransactionNotSuccessStatus = 2031;
