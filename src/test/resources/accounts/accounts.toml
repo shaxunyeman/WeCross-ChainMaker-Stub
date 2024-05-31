@@ -1,19 +1,4 @@
 [[account]]
-    type = 'CHAIN_MAKER_GM' # CHAIN_MAKER or CHAIN_MAKER_GM
-    name = "PublicUserGM001"
-    signKeyPath = 'PublicUserGM001.key'
-
-[[account]]
-    type = 'CHAIN_MAKER_GM' # CHAIN_MAKER or CHAIN_MAKER_GM
-    name = "PublicUserGM002"
-    signKeyPath = 'PublicUserGM002.key'
-
-[[account]]
-    type = 'CHAIN_MAKER_GM' # CHAIN_MAKER or CHAIN_MAKER_GM
-    name = "PublicUserGM003"
-    signKeyPath = 'PublicUserGM003.key'
-
-[[account]]
-    type = 'CHAIN_MAKER_GM' # CHAIN_MAKER or CHAIN_MAKER_GM
-    name = "PublicUserGM004"
-    signKeyPath = 'PublicUserGM004.key'
+    type = 'CHAIN_MAKER' # CHAIN_MAKER or CHAIN_MAKER_GM
+    name = "chain_maker"
+    signKeyPath = '439dea8f34bc33f61ef56151319769e209f83b66.key'

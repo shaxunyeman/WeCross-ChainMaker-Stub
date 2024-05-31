@@ -15,9 +15,9 @@ public class ChainMakerAccountFactoryTest {
     ChainMakerAccountFactory chainMaker =
         ChainMakerAccountFactory.getInstance(ChainMakerConstant.CHAIN_MAKER_ECDSA_EVM_STUB_TYPE);
     List<ChainMakerAccount> accounts =
-        chainMaker.build(AuthType.PermissionedWithCert.getMsg(), "classpath:/accounts");
-    assertEquals(accounts.size(), 2);
-    // assertEquals(account.getType(), ChainMakerConstant.CHAIN_MAKER_ECDSA_EVM_STUB_TYPE);
-    // assertEquals(account.getName(), "chain_maker");
+        chainMaker.build(AuthType.Public.getMsg(), "classpath:/accounts");
+    assertEquals(accounts.size(), 1);
+    assertEquals(accounts.get(0).getType(), ChainMakerConstant.CHAIN_MAKER_ECDSA_EVM_STUB_TYPE);
+    assertEquals(accounts.get(0).getName(), "chain_maker");
   }
 }
