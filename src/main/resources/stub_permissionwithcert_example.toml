@@ -1,0 +1,33 @@
+[common]
+    name = 'chainmaker' # stub must be same with directory name
+    type = 'CHAIN_MAKER' # CHAIN_MAKER or CHAIN_MAKER_GM
+[chain]
+    chainId = 'pkchain01'
+    orgId = 'qctc003-org-id-001'
+    signKeyPath = 'sign.key'
+    signCertPath = 'sign.crt'   # it's valid if authType is permissionedWithcert
+    tlsKeyPath = 'tls.key'      # it's valid if authType is permissionedWithcert
+    tlsCertPath = 'tls.cert'    # it's valid if authType is permissionedWithcert
+    authType = 'permissionedWithcert'         # public or permissionedWithcert
+    [chain.crypto]
+        hash = "SHA256"
+    [[chain.nodes]]
+        nodeAddr = "127.0.0.1:13001"
+        enableTls = true
+        tlsHostName = "chainmaker.org"
+        trustRootPaths = ["./ca"]
+    [chain.rpcClient]
+        callTimeout = 10000
+        syncResultTimeout = 10000
+        maxReceiveMessageSize = 100
+
+[[resources]]
+    type = 'CM_CONTRACT'
+    name = 'WeCrossProxy'
+    address = '16d09a2580c2ac8ed649c1df35b93061de1fa130'
+    abi = ''
+[[resources]]
+    type = 'CM_CONTRACT'
+    name = 'WeCrossHub'
+    address = '3928313d50222ae2ec908a99a83d5b6a56e56a7c'
+    abi = ''

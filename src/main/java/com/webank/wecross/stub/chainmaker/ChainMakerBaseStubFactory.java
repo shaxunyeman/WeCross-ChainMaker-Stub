@@ -18,10 +18,12 @@ public class ChainMakerBaseStubFactory implements StubFactory {
   private final Logger logger = LoggerFactory.getLogger(ChainMakerBaseStubFactory.class);
 
   private final String stubType;
+  private String authType;
   private final ChainMakerAccountFactory chainMakerAccountFactory;
 
   public ChainMakerBaseStubFactory(String stubType) {
     this.stubType = stubType;
+    this.authType = "";
     this.chainMakerAccountFactory = ChainMakerAccountFactory.getInstance(stubType);
   }
 
@@ -57,6 +59,9 @@ public class ChainMakerBaseStubFactory implements StubFactory {
         throw new Exception(errorMsg);
       }
 
+      this.authType =
+          connection.getProperties().get(ChainMakerConstant.CHAIN_MAKER_PROPERTY_AUTH_TYPE);
+
       return connection;
     } catch (Exception e) {
       logger.error(" newConnection, e: ", e);
@@ -66,6 +71,7 @@ public class ChainMakerBaseStubFactory implements StubFactory {
 
   @Override
   public Account newAccount(Map<String, Object> properties) {
+    properties.put(ChainMakerConstant.CHAIN_MAKER_PROPERTY_AUTH_TYPE, this.authType);
     return chainMakerAccountFactory.build(properties);
   }
 
