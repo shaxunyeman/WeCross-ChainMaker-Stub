@@ -220,7 +220,7 @@ public class ChainMakerConnection implements Connection {
       String contractMethodId = cmRequest.getContractMethodId();
       Map<String, byte[]> contractMethodParams = cmRequest.getContractMethodParams();
       ResultOuterClass.TxResponse txResponse =
-          clientWrapper.invokeContract(contractAddress, contractMethodId, contractMethodParams);
+          clientWrapper.queryContract(contractAddress, contractMethodId, contractMethodParams);
       if (logger.isDebugEnabled()) {
         logger.debug("handleAsyncCallRequest: {}", JsonFormat.printer().print(txResponse));
       }
