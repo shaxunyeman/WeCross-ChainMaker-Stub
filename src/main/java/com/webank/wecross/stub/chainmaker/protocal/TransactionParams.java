@@ -2,6 +2,7 @@ package com.webank.wecross.stub.chainmaker.protocal;
 
 import com.webank.wecross.stub.TransactionRequest;
 import java.util.Map;
+import org.chainmaker.sdk.User;
 
 public class TransactionParams {
   private TransactionRequest transactionRequest;
@@ -15,6 +16,8 @@ public class TransactionParams {
 
   // send transaction signature key
   private byte[] signKey;
+
+  private User user;
 
   public enum SUB_TYPE {
     SEND_TX_BY_PROXY,
@@ -92,6 +95,14 @@ public class TransactionParams {
 
   public void setSignKey(byte[] signKey) {
     this.signKey = signKey;
+  }
+
+  public User getUser() {
+    return user;
+  }
+
+  public void setUser(User user) {
+    this.user = user;
   }
 
   @Override

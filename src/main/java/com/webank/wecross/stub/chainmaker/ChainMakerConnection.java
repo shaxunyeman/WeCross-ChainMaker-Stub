@@ -244,9 +244,9 @@ public class ChainMakerConnection implements Connection {
       String contractAddress = cmRequest.getContractAddress();
       String contractMethodId = cmRequest.getContractMethodId();
       Map<String, byte[]> contractMethodParams = cmRequest.getContractMethodParams();
-      // User user = ChainMakerUserFactory.buildUserFromPrivateKeyBytes(cmRequest.getSignKey());
       ResultOuterClass.TxResponse txResponse =
-          clientWrapper.invokeContract(contractAddress, contractMethodId, contractMethodParams);
+          clientWrapper.invokeContractWithUser(
+              contractAddress, contractMethodId, contractMethodParams, cmRequest.getUser());
       if (logger.isDebugEnabled()) {
         logger.debug("handleAsyncTransactionRequest: {}", JsonFormat.printer().print(txResponse));
       }
