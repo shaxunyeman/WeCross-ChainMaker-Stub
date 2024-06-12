@@ -22,6 +22,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 public class DeployWeCrossContract {
   private final String WECROSS_PROXY = "WeCrossProxy";
   private final String WECROSS_HUB = "WeCrossHub";
+  private final String EVM_CONTRACT_PATH = "contracts/evm";
 
   private ChainMakerConnection chainMakerConnection;
   private String chainPath;
@@ -36,7 +37,14 @@ public class DeployWeCrossContract {
 
   private void deployOrUpgradeProxyContract(boolean deploy, String contractName) throws Exception {
     String contractBinFile =
-        this.chainPath + File.separator + contractName + File.separator + contractName + ".bin";
+        this.chainPath
+            + File.separator
+            + EVM_CONTRACT_PATH
+            + File.separator
+            + contractName
+            + File.separator
+            + contractName
+            + ".bin";
 
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
     Resource resource = resolver.getResource(contractBinFile);
