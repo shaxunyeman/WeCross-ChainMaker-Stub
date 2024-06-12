@@ -1,7 +1,11 @@
 package com.webank.wecross.stub.chainmaker.client;
 
 import java.util.Map;
-import org.chainmaker.pb.common.*;
+import org.chainmaker.pb.common.ChainmakerBlock;
+import org.chainmaker.pb.common.ChainmakerTransaction;
+import org.chainmaker.pb.common.ContractOuterClass;
+import org.chainmaker.pb.common.Request;
+import org.chainmaker.pb.common.ResultOuterClass;
 import org.chainmaker.sdk.ChainClient;
 import org.chainmaker.sdk.ChainClientException;
 import org.chainmaker.sdk.User;
