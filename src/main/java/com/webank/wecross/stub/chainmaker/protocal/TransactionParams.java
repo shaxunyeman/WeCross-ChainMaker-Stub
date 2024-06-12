@@ -2,7 +2,6 @@ package com.webank.wecross.stub.chainmaker.protocal;
 
 import com.webank.wecross.stub.TransactionRequest;
 import java.util.Map;
-import org.chainmaker.sdk.User;
 
 public class TransactionParams {
   private TransactionRequest transactionRequest;
@@ -16,8 +15,11 @@ public class TransactionParams {
 
   // send transaction signature key
   private byte[] signKey;
-
-  private User user;
+  private byte[] signCert;
+  private byte[] tlsKey;
+  private byte[] tlsCert;
+  private String orgId;
+  private String authType;
 
   public enum SUB_TYPE {
     SEND_TX_BY_PROXY,
@@ -97,12 +99,44 @@ public class TransactionParams {
     this.signKey = signKey;
   }
 
-  public User getUser() {
-    return user;
+  public byte[] getSignCert() {
+    return signCert;
   }
 
-  public void setUser(User user) {
-    this.user = user;
+  public void setSignCert(byte[] signCert) {
+    this.signCert = signCert;
+  }
+
+  public byte[] getTlsKey() {
+    return tlsKey;
+  }
+
+  public void setTlsKey(byte[] tlsKey) {
+    this.tlsKey = tlsKey;
+  }
+
+  public byte[] getTlsCert() {
+    return tlsCert;
+  }
+
+  public void setTlsCert(byte[] tlsCert) {
+    this.tlsCert = tlsCert;
+  }
+
+  public String getOrgId() {
+    return orgId;
+  }
+
+  public void setOrgId(String orgId) {
+    this.orgId = orgId;
+  }
+
+  public String getAuthType() {
+    return authType;
+  }
+
+  public void setAuthType(String authType) {
+    this.authType = authType;
   }
 
   @Override

@@ -9,6 +9,7 @@ import com.webank.wecross.stub.ResourceInfo;
 import com.webank.wecross.stub.Response;
 import com.webank.wecross.stub.chainmaker.account.ChainMakerAccount;
 import com.webank.wecross.stub.chainmaker.account.ChainMakerAccountFactory;
+import com.webank.wecross.stub.chainmaker.account.ChainMakerUserFactory;
 import com.webank.wecross.stub.chainmaker.client.AbstractClientWrapper;
 import com.webank.wecross.stub.chainmaker.common.ChainMakerConstant;
 import com.webank.wecross.stub.chainmaker.common.ChainMakerRequestType;
@@ -34,6 +35,7 @@ import org.chainmaker.pb.common.ChainmakerBlock;
 import org.chainmaker.pb.common.ChainmakerTransaction;
 import org.chainmaker.pb.common.ResultOuterClass;
 import org.chainmaker.sdk.User;
+import org.chainmaker.sdk.config.AuthType;
 import org.chainmaker.sdk.utils.SdkUtils;
 import org.fisco.bcos.sdk.abi.FunctionEncoder;
 import org.fisco.bcos.sdk.abi.datatypes.Function;
@@ -243,10 +245,23 @@ public class ChainMakerConnection implements Connection {
           objectMapper.readValue(request.getData(), TransactionParams.class);
       String contractAddress = cmRequest.getContractAddress();
       String contractMethodId = cmRequest.getContractMethodId();
+      User user = null;
+      if (cmRequest.getAuthType().equals(AuthType.PermissionedWithCert.getMsg())) {
+        user =
+            ChainMakerUserFactory.buildUserFromPrivateKeyBytes(
+                cmRequest.getSignKey(),
+                cmRequest.getSignCert(),
+                cmRequest.getTlsKey(),
+                cmRequest.getTlsCert(),
+                false);
+        user.setOrgId(cmRequest.getOrgId());
+      } else {
+        user = ChainMakerUserFactory.buildUserFromPrivateKeyBytes(cmRequest.getSignKey());
+      }
       Map<String, byte[]> contractMethodParams = cmRequest.getContractMethodParams();
       ResultOuterClass.TxResponse txResponse =
           clientWrapper.invokeContractWithUser(
-              contractAddress, contractMethodId, contractMethodParams, cmRequest.getUser());
+              contractAddress, contractMethodId, contractMethodParams, user);
       if (logger.isDebugEnabled()) {
         logger.debug("handleAsyncTransactionRequest: {}", JsonFormat.printer().print(txResponse));
       }

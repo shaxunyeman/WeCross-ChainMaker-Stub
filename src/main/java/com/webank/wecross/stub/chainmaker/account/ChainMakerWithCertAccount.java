@@ -6,6 +6,9 @@ import org.chainmaker.sdk.utils.CryptoUtils;
 
 public class ChainMakerWithCertAccount extends ChainMakerAccount {
 
+  private byte[] tlsKey;
+  private byte[] tlsCert;
+
   public ChainMakerWithCertAccount(String name, String type, User user) {
     super(name, type, user);
   }
@@ -21,5 +24,21 @@ public class ChainMakerWithCertAccount extends ChainMakerAccount {
       id = "";
     }
     return id;
+  }
+
+  public byte[] getTlsKey() {
+    return tlsKey;
+  }
+
+  public void setTlsKey(byte[] tlsKey) {
+    this.tlsKey = tlsKey;
+  }
+
+  public byte[] getTlsCert() {
+    return tlsCert;
+  }
+
+  public void setTlsCert(byte[] tlsCert) {
+    this.tlsCert = tlsCert;
   }
 }

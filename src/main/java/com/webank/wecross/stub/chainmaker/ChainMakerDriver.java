@@ -16,6 +16,7 @@ import com.webank.wecross.stub.TransactionException;
 import com.webank.wecross.stub.TransactionRequest;
 import com.webank.wecross.stub.TransactionResponse;
 import com.webank.wecross.stub.chainmaker.account.ChainMakerAccount;
+import com.webank.wecross.stub.chainmaker.account.ChainMakerWithCertAccount;
 import com.webank.wecross.stub.chainmaker.common.ChainMakerConstant;
 import com.webank.wecross.stub.chainmaker.common.ChainMakerRequestType;
 import com.webank.wecross.stub.chainmaker.common.ChainMakerStatusCode;
@@ -45,6 +46,7 @@ import org.chainmaker.pb.common.ChainmakerBlock;
 import org.chainmaker.pb.common.ChainmakerTransaction;
 import org.chainmaker.pb.common.ContractOuterClass;
 import org.chainmaker.pb.common.ResultOuterClass;
+import org.chainmaker.pb.config.ChainConfigOuterClass;
 import org.chainmaker.sdk.User;
 import org.chainmaker.sdk.config.AuthType;
 import org.chainmaker.sdk.utils.CryptoUtils;
@@ -636,9 +638,9 @@ public class ChainMakerDriver implements Driver {
       ABIDefinition abiDefinition = contractABIDefinition.getConstructor();
       List<ABIDefinition.NamedType> inputs = abiDefinition.getInputs();
       // handle constructor params
-      if (args.length > 4) {
+      if (args.length > 5) {
         params = new ArrayList<>();
-        for (int i = 4; i < args.length; ++i) {
+        for (int i = 5; i < args.length; ++i) {
           params.add((String) args[i]);
         }
 
@@ -702,6 +704,12 @@ public class ChainMakerDriver implements Driver {
                 String rootPath =
                     chainMakerConnection.getProperty(ChainMakerConstant.CHAIN_MAKER_ROOT_PATH);
                 ABIContentUtility.writeContractABI(rootPath, contractName, abiContent);
+                ((ChainMakerConnection) connection).addAbi(contractName, abiContent);
+                ((ChainMakerConnection) connection)
+                    .addProperty(
+                        contractName,
+                        CryptoUtils.nameToAddrStr(
+                            contractName, ChainConfigOuterClass.AddrType.CHAINMAKER));
 
                 ResultOuterClass.TxResponse txResponse =
                     ResultOuterClass.TxResponse.parseFrom(response.getData());
@@ -807,12 +815,6 @@ public class ChainMakerDriver implements Driver {
 
       String contractAbi = chainMakerConnection.getAbi(name);
       String contractAddress = chainMakerConnection.getProperty(name);
-
-      if (contractAbi == null || contractAbi.isEmpty()) {
-        contractAbi =
-            ABIContentUtility.readContractABI(
-                chainMakerConnection.getProperty(ChainMakerConstant.CHAIN_MAKER_ROOT_PATH), name);
-      }
 
       if (contractAbi == null || contractAbi.isEmpty()) {
         throw new ChainMakerStubException(
@@ -958,12 +960,6 @@ public class ChainMakerDriver implements Driver {
       String contractAddress = chainMakerConnection.getProperty(name);
 
       if (contractAbi == null || contractAbi.isEmpty()) {
-        contractAbi =
-            ABIContentUtility.readContractABI(
-                chainMakerConnection.getProperty(ChainMakerConstant.CHAIN_MAKER_ROOT_PATH), name);
-      }
-
-      if (contractAbi == null || contractAbi.isEmpty()) {
         throw new ChainMakerStubException(
             ChainMakerStatusCode.ABINotExist, "resource ABI not exist: " + name);
       }
@@ -1097,12 +1093,6 @@ public class ChainMakerDriver implements Driver {
       String contractAddress = chainMakerConnection.getProperty(name);
 
       if (contractAbi == null || contractAbi.isEmpty()) {
-        contractAbi =
-            ABIContentUtility.readContractABI(
-                chainMakerConnection.getProperty(ChainMakerConstant.CHAIN_MAKER_ROOT_PATH), name);
-      }
-
-      if (contractAbi == null || contractAbi.isEmpty()) {
         throw new ChainMakerStubException(
             ChainMakerStatusCode.ABINotExist, "resource:" + name + " not exist");
       }
@@ -1177,7 +1167,16 @@ public class ChainMakerDriver implements Driver {
               params,
               TransactionParams.SUB_TYPE.SEND_TX_BY_PROXY);
       transactionParams.setAbi(contractAbi);
-      transactionParams.setUser(account.getUser());
+      User user = account.getUser();
+      transactionParams.setSignKey(user.getPriBytes());
+      transactionParams.setSignCert(user.getCertBytes());
+      if (user.getAuthType().equals(AuthType.PermissionedWithCert.getMsg())) {
+        transactionParams.setAuthType(AuthType.PermissionedWithCert.getMsg());
+        transactionParams.setOrgId(user.getOrgId());
+        ChainMakerWithCertAccount withCertAccount = (ChainMakerWithCertAccount) account;
+        transactionParams.setTlsKey(withCertAccount.getTlsKey());
+        transactionParams.setTlsCert(withCertAccount.getTlsCert());
+      }
       Request req =
           Request.newRequest(
               ChainMakerRequestType.SEND_TRANSACTION,
@@ -1267,12 +1266,6 @@ public class ChainMakerDriver implements Driver {
       String contractAddress = chainMakerConnection.getProperty(name);
 
       if (contractAbi == null || contractAbi.isEmpty()) {
-        contractAbi =
-            ABIContentUtility.readContractABI(
-                chainMakerConnection.getProperty(ChainMakerConstant.CHAIN_MAKER_ROOT_PATH), name);
-      }
-
-      if (contractAbi == null || contractAbi.isEmpty()) {
         throw new ChainMakerStubException(
             ChainMakerStatusCode.ABINotExist, "resource ABI not exist: " + name);
       }
@@ -1313,7 +1306,16 @@ public class ChainMakerDriver implements Driver {
               params,
               TransactionParams.SUB_TYPE.SEND_TX);
       transactionParams.setAbi(contractAbi);
-      transactionParams.setUser(account.getUser());
+      User user = account.getUser();
+      transactionParams.setSignKey(user.getPriBytes());
+      transactionParams.setSignCert(user.getCertBytes());
+      if (user.getAuthType().equals(AuthType.PermissionedWithCert.getMsg())) {
+        transactionParams.setAuthType(AuthType.PermissionedWithCert.getMsg());
+        transactionParams.setOrgId(user.getOrgId());
+        ChainMakerWithCertAccount withCertAccount = (ChainMakerWithCertAccount) account;
+        transactionParams.setTlsKey(withCertAccount.getTlsKey());
+        transactionParams.setTlsCert(withCertAccount.getTlsCert());
+      }
       Request req =
           Request.newRequest(
               ChainMakerRequestType.SEND_TRANSACTION,

@@ -7,8 +7,12 @@ import com.webank.wecross.stub.StubFactory;
 import com.webank.wecross.stub.WeCrossContext;
 import com.webank.wecross.stub.chainmaker.account.ChainMakerAccountFactory;
 import com.webank.wecross.stub.chainmaker.common.ChainMakerConstant;
+import com.webank.wecross.stub.chainmaker.utils.ABIContentUtility;
+import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
+import org.chainmaker.pb.config.ChainConfigOuterClass;
+import org.chainmaker.sdk.utils.CryptoUtils;
 import org.fisco.bcos.sdk.crypto.CryptoSuite;
 import org.fisco.bcos.sdk.model.CryptoType;
 import org.slf4j.Logger;
@@ -60,6 +64,8 @@ public class ChainMakerBaseStubFactory implements StubFactory {
         throw new Exception(errorMsg);
       }
 
+      loadLocalContractsABI(connection, path);
+
       this.authType =
           connection.getProperties().get(ChainMakerConstant.CHAIN_MAKER_PROPERTY_AUTH_TYPE);
 
@@ -67,6 +73,19 @@ public class ChainMakerBaseStubFactory implements StubFactory {
     } catch (Exception e) {
       logger.error(" newConnection, e: ", e);
       return null;
+    }
+  }
+
+  private void loadLocalContractsABI(ChainMakerConnection connection, String rootPath)
+      throws Exception {
+    // list contracts name
+    List<String> contractNames = ABIContentUtility.listContractNames(rootPath);
+    for (String contractName : contractNames) {
+      String abiContent = ABIContentUtility.readContractABI(rootPath, contractName);
+      connection.addAbi(contractName, abiContent);
+      connection.addProperty(
+          contractName,
+          CryptoUtils.nameToAddrStr(contractName, ChainConfigOuterClass.AddrType.CHAINMAKER));
     }
   }
 

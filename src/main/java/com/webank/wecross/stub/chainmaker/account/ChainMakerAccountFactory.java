@@ -48,6 +48,8 @@ public class ChainMakerAccountFactory {
             ChainMakerUserFactory.buildUserFromPrivateKeyBytes(
                 signKeyBytes, signCertBytes, tlsKeyBytes, tlsCertBytes, pkcs11Enable));
     account.getUser().setOrgId(ordId);
+    account.setTlsKey(tlsKeyBytes);
+    account.setTlsCert(tlsCertBytes);
     return account;
   }
 

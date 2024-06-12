@@ -44,6 +44,7 @@ public class ChainMakerUserFactory {
             tlsUserKeyBytes,
             tlsUserCertBytes,
             pkcs11Enable);
+    user.setPriBytes(userSignKeyBytes);
     return user;
   }
 }
