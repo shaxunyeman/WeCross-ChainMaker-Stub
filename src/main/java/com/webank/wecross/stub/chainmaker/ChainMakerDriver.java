@@ -909,8 +909,8 @@ public class ChainMakerDriver implements Driver {
 
                 Tuple2<Boolean, String> booleanStringTuple2 =
                     RevertMessage.tryResolveRevertMessage(
-                        txResponse.getCode().getNumber(),
-                        Hex.toHexString(txResponse.getContractResult().getResult().toByteArray()));
+                        txResponse.getContractResult().getCode(),
+                        txResponse.getContractResult().getMessage());
                 if (Boolean.TRUE.equals(booleanStringTuple2.getValue1())) {
                   transactionResponse.setMessage(booleanStringTuple2.getValue2());
                 } else {
@@ -1040,8 +1040,8 @@ public class ChainMakerDriver implements Driver {
 
                 Tuple2<Boolean, String> booleanStringTuple2 =
                     RevertMessage.tryResolveRevertMessage(
-                        txResponse.getCode().getNumber(),
-                        Hex.toHexString(txResponse.getContractResult().getResult().toByteArray()));
+                        txResponse.getContractResult().getCode(),
+                        txResponse.getContractResult().getMessage());
                 if (Boolean.TRUE.equals(booleanStringTuple2.getValue1())) {
                   transactionResponse.setMessage(booleanStringTuple2.getValue2());
                 } else {
@@ -1216,8 +1216,8 @@ public class ChainMakerDriver implements Driver {
                     ChainMakerStatusCode.SendTransactionNotSuccessStatus);
                 Tuple2<Boolean, String> booleanStringTuple2 =
                     RevertMessage.tryResolveRevertMessage(
-                        txResponse.getCode().getNumber(),
-                        Hex.toHexString(txResponse.getContractResult().getResult().toByteArray()));
+                        txResponse.getContractResult().getCode(),
+                        txResponse.getContractResult().getMessage());
                 if (Boolean.TRUE.equals(booleanStringTuple2.getValue1())) {
                   transactionResponse.setMessage(booleanStringTuple2.getValue2());
                 } else {
@@ -1353,11 +1353,10 @@ public class ChainMakerDriver implements Driver {
               } else {
                 // if error, try to decode revert msg
                 transactionResponse.setErrorCode(ChainMakerStatusCode.CallNotSuccessStatus);
-
                 Tuple2<Boolean, String> booleanStringTuple2 =
                     RevertMessage.tryResolveRevertMessage(
-                        txResponse.getCode().getNumber(),
-                        Hex.toHexString(txResponse.getContractResult().getResult().toByteArray()));
+                        txResponse.getContractResult().getCode(),
+                        txResponse.getContractResult().getMessage());
                 if (Boolean.TRUE.equals(booleanStringTuple2.getValue1())) {
                   transactionResponse.setMessage(booleanStringTuple2.getValue2());
                 } else {

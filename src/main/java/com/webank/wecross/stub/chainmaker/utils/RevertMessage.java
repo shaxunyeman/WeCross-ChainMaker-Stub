@@ -48,16 +48,6 @@ public class RevertMessage {
   }
 
   /**
-   * @param message
-   * @return
-   */
-  public static String getErrorMessage(String message) {
-
-    // FIXME: need to be implemented
-    return "";
-  }
-
-  /**
    * try to resolve revert message, supports recursive operations
    *
    * @param status
