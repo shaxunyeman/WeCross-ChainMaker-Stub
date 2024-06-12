@@ -16,7 +16,6 @@ import com.webank.wecross.stub.TransactionException;
 import com.webank.wecross.stub.TransactionRequest;
 import com.webank.wecross.stub.TransactionResponse;
 import com.webank.wecross.stub.chainmaker.account.ChainMakerAccount;
-import com.webank.wecross.stub.chainmaker.account.ChainMakerPublicAccount;
 import com.webank.wecross.stub.chainmaker.common.ChainMakerConstant;
 import com.webank.wecross.stub.chainmaker.common.ChainMakerRequestType;
 import com.webank.wecross.stub.chainmaker.common.ChainMakerStatusCode;
@@ -632,21 +631,31 @@ public class ChainMakerDriver implements Driver {
     String version = (String) args[4];
     org.chainmaker.pb.common.Request.Payload payload = null;
     try {
-      String[] params = null;
+      List<String> params = null;
       ContractABIDefinition contractABIDefinition = this.abiDefinitionFactory.loadABI(abiContent);
       ABIDefinition abiDefinition = contractABIDefinition.getConstructor();
       List<ABIDefinition.NamedType> inputs = abiDefinition.getInputs();
       // handle constructor params
-      for (int i = 5; i < 5 + inputs.size(); i++) {
-        if (params == null) {
-          params = new String[inputs.size()];
+      if (args.length > 4) {
+        params = new ArrayList<>();
+        for (int i = 4; i < args.length; ++i) {
+          params.add((String) args[i]);
         }
-        params[i - 5] = (String) args[i];
+
+        if (inputs.size() != params.size()) {
+          callback.onResponse(
+              new Exception(
+                  String.format(
+                      "deploy a contract names %s failed. reason: mismatch constructor's params",
+                      contractName)),
+              null);
+          return;
+        }
       }
+
       if (params != null) {
         ABIObject abiObject =
-            this.codecJsonWrapper.encode(
-                ABIObjectFactory.createInputObject(abiDefinition), Arrays.asList(params));
+            this.codecJsonWrapper.encode(ABIObjectFactory.createInputObject(abiDefinition), params);
         compliedCode += abiObject.encode();
       }
 
@@ -1158,6 +1167,8 @@ public class ChainMakerDriver implements Driver {
       Map<String, byte[]> params = new HashMap<>();
       params.put(ChainMakerConstant.CHAIN_MAKER_CONTRACT_ARGS_EVM_PARAM, encodedMethodWithArgs);
 
+      ChainMakerAccount account = (ChainMakerAccount) context.getAccount();
+
       TransactionParams transactionParams =
           new TransactionParams(
               request,
@@ -1166,6 +1177,7 @@ public class ChainMakerDriver implements Driver {
               params,
               TransactionParams.SUB_TYPE.SEND_TX_BY_PROXY);
       transactionParams.setAbi(contractAbi);
+      transactionParams.setUser(account.getUser());
       Request req =
           Request.newRequest(
               ChainMakerRequestType.SEND_TRANSACTION,
@@ -1265,9 +1277,7 @@ public class ChainMakerDriver implements Driver {
             ChainMakerStatusCode.ABINotExist, "resource ABI not exist: " + name);
       }
 
-      ChainMakerPublicAccount account = (ChainMakerPublicAccount) context.getAccount();
-      User user = account.getUser();
-
+      ChainMakerAccount account = (ChainMakerAccount) context.getAccount();
       // encode
       String[] args = request.getArgs();
       String method = request.getMethod();
@@ -1303,7 +1313,7 @@ public class ChainMakerDriver implements Driver {
               params,
               TransactionParams.SUB_TYPE.SEND_TX);
       transactionParams.setAbi(contractAbi);
-      transactionParams.setSignKey(user.getPriBytes());
+      transactionParams.setUser(account.getUser());
       Request req =
           Request.newRequest(
               ChainMakerRequestType.SEND_TRANSACTION,
