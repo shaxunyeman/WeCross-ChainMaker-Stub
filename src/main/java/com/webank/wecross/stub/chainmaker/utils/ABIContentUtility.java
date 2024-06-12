@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
@@ -51,5 +53,22 @@ public class ABIContentUtility {
     }
 
     return new String(Files.readAllBytes(Paths.get(abiFilePath.getPath())));
+  }
+
+  public static List<String> listContractNames(String rootPath) throws Exception {
+    List<String> contractNames = new ArrayList<>();
+    PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+    Resource resource = resolver.getResource(rootPath);
+    File path = new File(resource.getFile().getPath() + File.separator + EVM_CONTRACT_PATH);
+    for (File sub : path.listFiles()) {
+      if (sub.isHidden()) {
+        continue;
+      }
+      if (sub.isFile()) {
+        continue;
+      }
+      contractNames.add(sub.getName());
+    }
+    return contractNames;
   }
 }
