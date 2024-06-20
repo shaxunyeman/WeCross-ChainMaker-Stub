@@ -1,0 +1,4 @@
+[[account]]
+    type = 'CHAIN_MAKER' # CHAIN_MAKER or CHAIN_MAKER_GM
+    name = "chain_maker"
+    signKeyPath = '439dea8f34bc33f61ef56151319769e209f83b66.key'

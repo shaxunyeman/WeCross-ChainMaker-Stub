@@ -1,0 +1,17 @@
+[[account]]
+    type = 'CHAIN_MAKER' # CHAIN_MAKER or CHAIN_MAKER_GM
+    orgId = "org1"
+    name = "org1-name"
+    signKeyPath = 'sign1.key'
+    signCertPath = 'sign1.cert' # it's valid if authType is permissionWithCert
+    tlsKeyPath = 'tls1.key'     # it's valid if authType is permissionWithCert
+    tlsCertPath = 'tls1.cert'   # it's valid if authType is permissionWithCert
+
+[[account]]
+    type = 'CHAIN_MAKER' # CHAIN_MAKER or CHAIN_MAKER_GM
+    orgId = "org2"
+    name = "org2-name"
+    signKeyPath = 'sign2.key'
+    signCertPath = 'sign2.cert'
+    tlsKeyPath = 'tls2.key'
+    tlsCertPath = 'tls2.cert'

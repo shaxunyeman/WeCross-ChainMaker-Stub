@@ -6,7 +6,12 @@ import java.io.IOException;
 import java.util.List;
 import org.chainmaker.sdk.ChainClient;
 import org.chainmaker.sdk.ChainManager;
-import org.chainmaker.sdk.config.*;
+import org.chainmaker.sdk.config.AuthType;
+import org.chainmaker.sdk.config.ChainClientConfig;
+import org.chainmaker.sdk.config.CryptoConfig;
+import org.chainmaker.sdk.config.NodeConfig;
+import org.chainmaker.sdk.config.RpcClientConfig;
+import org.chainmaker.sdk.config.SdkConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -73,21 +78,21 @@ public class ClientUtility {
       }
 
       Resource signCertResource = resolver.getResource(signCertPath);
-      if (!signKeyResource.exists() || !signKeyResource.isFile()) {
+      if (!signCertResource.exists() || !signCertResource.isFile()) {
         throw new WeCrossException(
             WeCrossException.ErrorCode.DIR_NOT_EXISTS,
             signCertPath + " does not exist, please check.");
       }
 
       Resource tlsKeyResource = resolver.getResource(tlsKeyPath);
-      if (!signKeyResource.exists() || !signKeyResource.isFile()) {
+      if (!tlsKeyResource.exists() || !tlsKeyResource.isFile()) {
         throw new WeCrossException(
             WeCrossException.ErrorCode.DIR_NOT_EXISTS,
             tlsKeyPath + " does not exist, please check.");
       }
 
       Resource tlsCertResource = resolver.getResource(tlsCertPath);
-      if (!signKeyResource.exists() || !signKeyResource.isFile()) {
+      if (!tlsCertResource.exists() || !tlsCertResource.isFile()) {
         throw new WeCrossException(
             WeCrossException.ErrorCode.DIR_NOT_EXISTS,
             tlsCertPath + " does not exist, please check.");
